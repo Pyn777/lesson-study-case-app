@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getResponses, getSummary } from "../../../lib/db";
+import { getResponses, getSummary, getSubmissionAudit } from "../../../lib/db";
 
 export const runtime = "nodejs";
 
@@ -22,8 +22,12 @@ export async function GET(request) {
   }
 
   try {
-    const [rows, summary] = await Promise.all([getResponses(), getSummary()]);
-    return NextResponse.json({ ok: true, rows, summary });
+    const [rows, summary, audit] = await Promise.all([
+      getResponses(),
+      getSummary(),
+      getSubmissionAudit(),
+    ]);
+    return NextResponse.json({ ok: true, rows, summary, audit });
   } catch (error) {
     console.error("Results fetch failed:", error);
     return NextResponse.json(
