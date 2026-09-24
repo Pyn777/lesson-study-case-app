@@ -127,3 +127,24 @@ th { color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spac
 @media (max-width:560px) {
   .statsGrid { grid-template-columns:1fr; }
 }
+
+
+.filterPanel { background:#fff; border:1px solid var(--line); border-radius:18px; padding:24px; margin:20px 0; }
+.filterHeader { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.filterHeader h2 { margin:.25rem 0 0; }
+.filterGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.filterGrid label { display:flex; flex-direction:column; gap:6px; color:var(--muted); font-size:.82rem; font-weight:700; }
+.filterGrid select { width:100%; padding:10px 11px; border:1px solid #cdd9e5; border-radius:9px; background:#fff; color:var(--ink); }
+.barList { display:grid; gap:16px; }
+.barRow { display:grid; gap:7px; }
+.barLabel { display:flex; justify-content:space-between; gap:12px; font-size:.92rem; }
+.barTrack { width:100%; height:12px; border-radius:999px; background:#edf2f7; overflow:hidden; }
+.barFill { height:100%; border-radius:999px; background:#547da8; }
+.barMeta { color:var(--muted); font-size:.8rem; }
+@media (max-width:900px) {
+  .filterGrid { grid-template-columns:repeat(2,1fr); }
+  .filterHeader { align-items:flex-start; flex-direction:column; }
+}
+@media (max-width:560px) {
+  .filterGrid { grid-template-columns:1fr; }
+}
