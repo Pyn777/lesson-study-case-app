@@ -2,8 +2,14 @@ import Link from "next/link";
 import QuestionSet from "../../components/QuestionSet";
 import CaseRecord from "../../components/CaseRecord";
 import { integratedQuestions } from "../../data/caseData";
+import { getStudySettings } from "../../lib/db";
+import { notFound } from "next/navigation";
 
-export default function AssessmentPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AssessmentPage() {
+  const settings = await getStudySettings();
+  if (!settings.activeModules.includes("integrated-assessment")) notFound();
   return (
     <main className="shell">
       <Link href="/" className="backLink">← Back to case overview</Link>
@@ -23,6 +29,7 @@ export default function AssessmentPage() {
         <QuestionSet
           questions={integratedQuestions}
           moduleId="integrated-assessment"
+          activeAnchorQuestionIds={settings.activeAnchorQuestionIds}
           submitLabel="Check integrated assessment"
         />
       </section>
