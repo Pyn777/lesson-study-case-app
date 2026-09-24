@@ -19,7 +19,8 @@ function summarize(rows, keyFn) {
     const group = groups.get(key);
     group.responses += 1;
     group.correct += row.correct ? 1 : 0;
-    group.responseMs += Number(row.responseMs || 0);
+    group.responseMs += Number(row.decisionMs ?? row.responseMs ?? 0);
+    group.rapid = (group.rapid || 0) + (row.rapidResponseFlag ? 1 : 0);
     group.attempts += Number(row.attempt || 1);
     if (row.studyId) group.studyIds.add(row.studyId);
   }
@@ -31,6 +32,7 @@ function summarize(rows, keyFn) {
     avgResponseMs: group.responses ? group.responseMs / group.responses : 0,
     avgAttempt: group.responses ? group.attempts / group.responses : 0,
     studyCount: group.studyIds.size,
+    rapidCount: group.rapid || 0,
   })).sort((a,b) => a.key.localeCompare(b.key));
 }
 
@@ -132,9 +134,24 @@ export default function ResultsPage() {
     const source = filteredRows;
     const totalResponses = source.length;
     const correctResponses = source.filter((row) => row.correct).length;
-    const avgResponseMs = totalResponses ? source.reduce((sum,row)=>sum+(row.responseMs||0),0)/totalResponses : 0;
+    const avgResponseMs = totalResponses
+      ? source.reduce((sum,row)=>sum+(row.decisionMs ?? row.responseMs ?? 0),0)/totalResponses
+      : 0;
     const uniqueStudyIds = new Set(source.map((row)=>row.studyId).filter(Boolean)).size;
-    return { totalResponses, correctResponses, avgResponseMs, uniqueStudyIds };
+    const rapidResponses = source.filter((row)=>row.rapidResponseFlag).length;
+
+    const moduleRuns = new Map();
+    for (const row of source) {
+      const key = [row.studyId || "", row.module || "", row.submittedAt || ""].join("|");
+      if (!moduleRuns.has(key) && row.moduleElapsedMs != null) {
+        moduleRuns.set(key, Number(row.moduleElapsedMs || 0));
+      }
+    }
+    const avgModuleMs = moduleRuns.size
+      ? [...moduleRuns.values()].reduce((sum,value)=>sum+value,0)/moduleRuns.size
+      : 0;
+
+    return { totalResponses, correctResponses, avgResponseMs, avgModuleMs, rapidResponses, uniqueStudyIds };
   }, [filteredRows]);
 
   const courseSummary = useMemo(() => summarize(filteredRows, r=>r.course), [filteredRows]);
@@ -169,7 +186,7 @@ export default function ResultsPage() {
   }
 
   function exportCsv() {
-    const headers=["studyId","course","section","module","questionId","conceptTag","anchorId","choiceIndex","correct","attempt","responseMs","submittedAt"];
+    const headers=["studyId","course","section","module","questionId","conceptTag","anchorId","choiceIndex","correct","attempt","firstAnswerMs","decisionMs","moduleElapsedMs","answerChanges","rapidResponseFlag","submittedAt"];
     const lines=[headers.join(","),...filteredRows.map(row=>headers.map(h=>csvEscape(row[h])).join(","))];
     const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
     const url=URL.createObjectURL(blob); const a=document.createElement("a");
@@ -232,8 +249,20 @@ export default function ResultsPage() {
           <section className="statsGrid">
             <div className="statCard"><span>Responses</span><strong>{computed.totalResponses}</strong></div>
             <div className="statCard"><span>Overall accuracy</span><strong>{computed.totalResponses?accuracy.toFixed(1)+"%":"—"}</strong></div>
-            <div className="statCard"><span>Average response time</span><strong>{computed.avgResponseMs?(computed.avgResponseMs/1000).toFixed(1)+" s":"—"}</strong></div>
+            <div className="statCard"><span>Avg. answer interval</span><strong>{computed.avgResponseMs?(computed.avgResponseMs/1000).toFixed(1)+" s":"—"}</strong></div>
+            <div className="statCard"><span>Avg. module time</span><strong>{computed.avgModuleMs?(computed.avgModuleMs/1000).toFixed(1)+" s":"—"}</strong></div>
+            <div className="statCard"><span>Rapid-response flags</span><strong>{computed.rapidResponses}</strong></div>
             <div className="statCard"><span>Study IDs</span><strong>{computed.uniqueStudyIds}</strong></div>
+          </section>
+
+          <section className="contentPanel">
+            <div className="eyebrow">Timing interpretation</div>
+            <h2>Response-time measures</h2>
+            <p className="prototypeNote">
+              Decision interval measures the time between a learner's first selections on successive questions.
+              First-answer time is measured from assessment load, while module time is the total time to submission.
+              A rapid-response flag marks a decision interval under 1.2 seconds; it is a review signal, not proof of guessing.
+            </p>
           </section>
 
           <BarSummary title="Accuracy by Course" rows={courseSummary} />
@@ -252,9 +281,9 @@ export default function ResultsPage() {
             </div>
             {!filteredRows.length ? <p>No responses match the current filters.</p> : (
               <div className="tableWrap"><table>
-                <thead><tr><th>Study ID</th><th>Course</th><th>Section</th><th>Module</th><th>Question</th><th>Concept</th><th>Anchor</th><th>Correct</th><th>Attempt</th><th>Time</th><th>Submitted</th></tr></thead>
+                <thead><tr><th>Study ID</th><th>Course</th><th>Section</th><th>Module</th><th>Question</th><th>Concept</th><th>Anchor</th><th>Correct</th><th>Attempt</th><th>Decision</th><th>First answer</th><th>Module</th><th>Changes</th><th>Rapid?</th><th>Submitted</th></tr></thead>
                 <tbody>{filteredRows.map(row=><tr key={row.id}>
-                  <td>{row.studyId||"—"}</td><td>{row.course||"—"}</td><td>{row.section||"—"}</td><td>{row.module}</td><td>{row.questionId}</td><td>{row.conceptTag||"—"}</td><td>{row.anchorId||"—"}</td><td>{row.correct?"Yes":"No"}</td><td>{row.attempt}</td><td>{row.responseMs!=null?(row.responseMs/1000).toFixed(1)+" s":"—"}</td><td>{row.submittedAt?new Date(row.submittedAt).toLocaleString():"—"}</td>
+                  <td>{row.studyId||"—"}</td><td>{row.course||"—"}</td><td>{row.section||"—"}</td><td>{row.module}</td><td>{row.questionId}</td><td>{row.conceptTag||"—"}</td><td>{row.anchorId||"—"}</td><td>{row.correct?"Yes":"No"}</td><td>{row.attempt}</td><td>{row.decisionMs!=null?(row.decisionMs/1000).toFixed(1)+" s":"—"}</td><td>{row.firstAnswerMs!=null?(row.firstAnswerMs/1000).toFixed(1)+" s":"—"}</td><td>{row.moduleElapsedMs!=null?(row.moduleElapsedMs/1000).toFixed(1)+" s":"—"}</td><td>{row.answerChanges??0}</td><td>{row.rapidResponseFlag?"Flag":"—"}</td><td>{row.submittedAt?new Date(row.submittedAt).toLocaleString():"—"}</td>
                 </tr>)}</tbody>
               </table></div>
             )}
