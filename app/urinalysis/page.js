@@ -1,9 +1,18 @@
 import Link from "next/link";
 import UrinalysisIntegration from "../../components/UrinalysisIntegration";
+import { getStudySettings } from "../../lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function UrinalysisPage() {
+export default async function UrinalysisPage() {
+  const settings = await getStudySettings();
+  const nextModule = ["renal-response", "integrated-assessment"]
+    .find((id) => settings.activeModules.includes(id));
+  const nextHref = nextModule === "integrated-assessment"
+    ? "/assessment"
+    : nextModule
+      ? "/module/" + nextModule
+      : "/";
   return (
     <main className="shell">
       <Link href="/module/microbiology" className="backLink">← Back to Microbiology lens</Link>
@@ -20,7 +29,7 @@ export default function UrinalysisPage() {
 
       <nav className="moduleNav">
         <Link href="/module/microbiology" className="secondaryLink">← Return to Microbiology</Link>
-        <Link href="/module/renal-response" className="primaryLink">Continue to renal lens →</Link>
+        <Link href={nextHref} className="primaryLink">Continue through the case →</Link>
       </nav>
     </main>
   );
