@@ -20,6 +20,11 @@ export const modules = {
     questions: [
       {
         id: "cell-1",
+        construct: "membrane-transport",
+        cognitiveLevel: "apply",
+        itemRole: "discipline",
+        discipline: "General Biology / A&P I",
+        transferType: "near-transfer",
         conceptTag: "osmosis-tonicity",
         prompt:
           "If extracellular fluid becomes more concentrated because of water loss, what is the most likely immediate effect on nearby cells?",
@@ -35,6 +40,11 @@ export const modules = {
       },
       {
         id: "cell-2",
+        construct: "membrane-transport",
+        cognitiveLevel: "understand",
+        itemRole: "discipline",
+        discipline: "General Biology / A&P I",
+        transferType: "foundational",
         conceptTag: "osmosis",
         prompt:
           "Which process best explains the movement of water across a selectively permeable membrane?",
@@ -45,6 +55,11 @@ export const modules = {
       },
       {
         id: "cell-3",
+        construct: "fluid-electrolyte-balance",
+        cognitiveLevel: "apply",
+        itemRole: "anchor",
+        discipline: "General Biology / A&P I",
+        transferType: "cross-disciplinary",
         conceptTag: "integrated-fluid-balance",
         anchorId: "fluid-balance-throughline",
         prompt:
@@ -76,6 +91,11 @@ export const modules = {
     questions: [
       {
         id: "micro-1",
+        construct: "microbial-identification",
+        cognitiveLevel: "apply",
+        itemRole: "discipline",
+        discipline: "Microbiology",
+        transferType: "near-transfer",
         conceptTag: "bacterial-identification",
         prompt:
           "Which finding would be most useful for distinguishing among bacterial isolates in a teaching laboratory?",
@@ -91,6 +111,11 @@ export const modules = {
       },
       {
         id: "micro-2",
+        construct: "fluid-electrolyte-balance",
+        cognitiveLevel: "apply",
+        itemRole: "anchor",
+        discipline: "Microbiology",
+        transferType: "cross-disciplinary",
         conceptTag: "integrated-fluid-balance",
         anchorId: "fluid-balance-throughline",
         prompt:
@@ -107,6 +132,11 @@ export const modules = {
       },
       {
         id: "micro-3",
+        construct: "microbial-identification",
+        cognitiveLevel: "analyze",
+        itemRole: "discipline",
+        discipline: "Microbiology",
+        transferType: "near-transfer",
         conceptTag: "microbiology-reasoning",
         prompt:
           "Which sequence best reflects the microbiology reasoning process in this case?",
@@ -137,6 +167,11 @@ export const modules = {
     questions: [
       {
         id: "renal-1",
+        construct: "renal-homeostasis",
+        cognitiveLevel: "apply",
+        itemRole: "discipline",
+        discipline: "A&P II",
+        transferType: "near-transfer",
         conceptTag: "renal-water-conservation",
         prompt:
           "During dehydration, which response would help conserve body water?",
@@ -152,6 +187,11 @@ export const modules = {
       },
       {
         id: "renal-2",
+        construct: "renal-homeostasis",
+        cognitiveLevel: "apply",
+        itemRole: "discipline",
+        discipline: "A&P II",
+        transferType: "near-transfer",
         conceptTag: "nephron-fluid-balance",
         prompt:
           "Why is nephron physiology important in this case?",
@@ -167,6 +207,11 @@ export const modules = {
       },
       {
         id: "renal-3",
+        construct: "fluid-electrolyte-balance",
+        cognitiveLevel: "analyze",
+        itemRole: "anchor",
+        discipline: "A&P II",
+        transferType: "cross-disciplinary",
         conceptTag: "integrated-fluid-balance",
         anchorId: "fluid-balance-throughline",
         prompt:
@@ -188,6 +233,11 @@ export const modules = {
 export const integratedQuestions = [
   {
     id: "integrated-1",
+    construct: "fluid-electrolyte-balance",
+    cognitiveLevel: "analyze",
+    itemRole: "anchor",
+    discipline: "Integrated",
+    transferType: "far-transfer",
     conceptTag: "integrated-fluid-balance",
     anchorId: "fluid-balance-throughline",
     prompt:
@@ -204,6 +254,11 @@ export const integratedQuestions = [
   },
   {
     id: "integrated-2",
+    construct: "interdisciplinary-integration",
+    cognitiveLevel: "analyze",
+    itemRole: "transfer",
+    discipline: "Integrated",
+    transferType: "far-transfer",
     conceptTag: "interdisciplinary-transfer",
     prompt:
       "What is the strongest reason to revisit the same case in multiple courses?",
