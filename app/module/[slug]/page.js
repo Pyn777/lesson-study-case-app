@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import QuestionSet from "../../../components/QuestionSet";
 import CaseRecord from "../../../components/CaseRecord";
 import { modules, sharedCase } from "../../../data/caseData";
+import { getStudySettings } from "../../../lib/db";
+
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return Object.keys(modules).map((slug) => ({ slug }));
@@ -11,15 +14,18 @@ export function generateStaticParams() {
 export default async function ModulePage({ params }) {
   const { slug } = await params;
   const module = modules[slug];
+  const settings = await getStudySettings();
 
-  if (!module) notFound();
+  if (!module || !settings.activeModules.includes(slug)) notFound();
 
   const ordered = Object.entries(modules)
+    .filter(([moduleSlug]) => settings.activeModules.includes(moduleSlug))
     .sort((a, b) => a[1].order - b[1].order)
     .map(([moduleSlug]) => moduleSlug);
 
   const currentIndex = ordered.indexOf(slug);
   const nextSlug = ordered[currentIndex + 1];
+  const integratedActive = settings.activeModules.includes("integrated-assessment");
 
   return (
     <main className="shell">
@@ -59,7 +65,7 @@ export default async function ModulePage({ params }) {
           </div>
           <p>Answer all questions before checking your responses.</p>
         </div>
-        <QuestionSet questions={module.questions} moduleId={slug} />
+        <QuestionSet questions={module.questions} moduleId={slug} activeAnchorQuestionIds={settings.activeAnchorQuestionIds} />
       </section>
 
       <nav className="moduleNav">
@@ -68,9 +74,13 @@ export default async function ModulePage({ params }) {
           <Link href={"/module/" + nextSlug} className="primaryLink">
             Continue to next lens →
           </Link>
-        ) : (
+        ) : integratedActive ? (
           <Link href="/assessment" className="primaryLink">
             Continue to integrated assessment →
+          </Link>
+        ) : (
+          <Link href="/" className="primaryLink">
+            Return to case overview
           </Link>
         )}
       </nav>
