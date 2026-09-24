@@ -3,6 +3,115 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+
+const MODULE_ORDER = {
+  "cellular-foundation": 1,
+  microbiology: 2,
+  "renal-response": 3,
+  "integrated-assessment": 4,
+};
+
+const MODULE_LABEL = {
+  "cellular-foundation": "Cellular Foundation",
+  microbiology: "Microbiology",
+  "renal-response": "Renal Response",
+  "integrated-assessment": "Integrated Assessment",
+};
+
+function buildRepeatedMeasures(rows) {
+  const grouped = new Map();
+
+  for (const row of rows) {
+    if (!row.studyId) continue;
+    const key = row.studyId;
+    if (!grouped.has(key)) grouped.set(key, new Map());
+
+    const stageMap = grouped.get(key);
+    const stageKey = row.module || "unknown";
+    if (!stageMap.has(stageKey)) {
+      stageMap.set(stageKey, {
+        module: stageKey,
+        responses: 0,
+        correct: 0,
+        decisionMs: 0,
+        submittedAt: row.submittedAt || "",
+      });
+    }
+
+    const stage = stageMap.get(stageKey);
+    stage.responses += 1;
+    stage.correct += row.correct ? 1 : 0;
+    stage.decisionMs += Number(row.decisionMs ?? row.responseMs ?? 0);
+    if (row.submittedAt && row.submittedAt > stage.submittedAt) {
+      stage.submittedAt = row.submittedAt;
+    }
+  }
+
+  const result = [];
+  for (const [studyId, stageMap] of grouped.entries()) {
+    const stages = [...stageMap.values()]
+      .map((stage) => ({
+        ...stage,
+        order: MODULE_ORDER[stage.module] ?? 99,
+        label: MODULE_LABEL[stage.module] || stage.module,
+        accuracy: stage.responses ? (stage.correct / stage.responses) * 100 : 0,
+        avgDecisionMs: stage.responses ? stage.decisionMs / stage.responses : 0,
+      }))
+      .sort((a, b) => a.order - b.order || a.module.localeCompare(b.module));
+
+    if (!stages.length) continue;
+    const first = stages[0];
+    const last = stages[stages.length - 1];
+
+    result.push({
+      studyId,
+      stages,
+      first,
+      last,
+      accuracyDelta: last.accuracy - first.accuracy,
+      timeDeltaMs: last.avgDecisionMs - first.avgDecisionMs,
+      stageCount: stages.length,
+    });
+  }
+
+  return result.sort((a, b) => a.studyId.localeCompare(b.studyId));
+}
+
+function buildAnchorRepeatedMeasures(rows) {
+  const anchorRows = rows.filter((row) => row.studyId && row.anchorId);
+  const grouped = new Map();
+
+  for (const row of anchorRows) {
+    const key = row.studyId + "||" + row.anchorId;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(row);
+  }
+
+  return [...grouped.entries()].map(([key, values]) => {
+    const [studyId, anchorId] = key.split("||");
+    const stages = values
+      .map((row) => ({
+        module: row.module,
+        label: MODULE_LABEL[row.module] || row.module,
+        order: MODULE_ORDER[row.module] ?? 99,
+        correct: Boolean(row.correct),
+        decisionMs: Number(row.decisionMs ?? row.responseMs ?? 0),
+      }))
+      .sort((a, b) => a.order - b.order);
+
+    return { studyId, anchorId, stages };
+  }).sort((a, b) => a.studyId.localeCompare(b.studyId));
+}
+
+function Delta({ value, suffix = "", inverse = false }) {
+  if (!Number.isFinite(value)) return <>—</>;
+  const rounded = Math.abs(value) >= 10 ? value.toFixed(1) : value.toFixed(2);
+  const sign = value > 0 ? "+" : "";
+  const direction = inverse ? -value : value;
+  const label = direction > 0 ? "improved" : direction < 0 ? "declined" : "unchanged";
+  return <span title={label}>{sign}{rounded}{suffix}</span>;
+}
+
 function csvEscape(value) {
   const text = String(value ?? "");
   if (/[",\n]/.test(text)) return '"' + text.replace(/"/g, '""') + '"';
@@ -185,6 +294,8 @@ export default function ResultsPage() {
   const constructSummary = useMemo(() => summarize(filteredRows, r=>r.construct), [filteredRows]);
   const cognitiveSummary = useMemo(() => summarize(filteredRows, r=>r.cognitiveLevel), [filteredRows]);
   const transferSummary = useMemo(() => summarize(filteredRows, r=>r.transferType), [filteredRows]);
+  const repeatedMeasures = useMemo(() => buildRepeatedMeasures(filteredRows), [filteredRows]);
+  const anchorRepeatedMeasures = useMemo(() => buildAnchorRepeatedMeasures(filteredRows), [filteredRows]);
 
   async function loadResults(e) {
     e?.preventDefault();
@@ -306,6 +417,97 @@ export default function ResultsPage() {
           <BarSummary title="Accuracy by Transfer Type" rows={transferSummary} />
           <SummaryTable title="Performance by Question" rows={questionSummary} />
           <SummaryTable title="Performance by Study ID" rows={studentSummary} />
+
+          <section className="contentPanel">
+            <div className="sectionHeader">
+              <div>
+                <div className="eyebrow">Repeated measures</div>
+                <h2>Change by Study ID across modules</h2>
+              </div>
+            </div>
+            <p className="prototypeNote">
+              This view compares each Study ID's earliest and latest completed module in the current filter set.
+              Accuracy change is descriptive only; students may have completed different numbers of stages.
+            </p>
+            {!repeatedMeasures.length ? (
+              <p>No repeated-measures data are available yet.</p>
+            ) : (
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Study ID</th>
+                      <th>Stages</th>
+                      <th>First stage</th>
+                      <th>First accuracy</th>
+                      <th>Latest stage</th>
+                      <th>Latest accuracy</th>
+                      <th>Accuracy change</th>
+                      <th>Decision-time change</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {repeatedMeasures.map((student) => (
+                      <tr key={student.studyId}>
+                        <td>{student.studyId}</td>
+                        <td>{student.stageCount}</td>
+                        <td>{student.first.label}</td>
+                        <td>{student.first.accuracy.toFixed(1)}%</td>
+                        <td>{student.last.label}</td>
+                        <td>{student.last.accuracy.toFixed(1)}%</td>
+                        <td><Delta value={student.accuracyDelta} suffix=" pp" /></td>
+                        <td><Delta value={student.timeDeltaMs / 1000} suffix=" s" inverse /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          <section className="contentPanel">
+            <div className="sectionHeader">
+              <div>
+                <div className="eyebrow">Anchor progression</div>
+                <h2>Longitudinal anchor items by Study ID</h2>
+              </div>
+            </div>
+            <p className="prototypeNote">
+              Each row shows how the same anchor family appears across the disciplinary sequence for a single anonymous Study ID.
+            </p>
+            {!anchorRepeatedMeasures.length ? (
+              <p>No longitudinal anchor responses are available yet.</p>
+            ) : (
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Study ID</th>
+                      <th>Anchor family</th>
+                      <th>Progression</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {anchorRepeatedMeasures.map((record) => (
+                      <tr key={record.studyId + record.anchorId}>
+                        <td>{record.studyId}</td>
+                        <td>{record.anchorId}</td>
+                        <td>
+                          {record.stages.map((stage, index) => (
+                            <span key={stage.module + index} className="progressionStep">
+                              {index > 0 ? " → " : ""}
+                              {stage.label}: {stage.correct ? "Correct" : "Incorrect"} · {(stage.decisionMs / 1000).toFixed(1)} s
+                            </span>
+                          ))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
 
           <section className="contentPanel">
             <div className="sectionHeader">
