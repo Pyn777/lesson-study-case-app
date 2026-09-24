@@ -56,7 +56,7 @@ export default async function ModulePage({ params }) {
           </div>
           <p>Answer all questions before checking your responses.</p>
         </div>
-        <QuestionSet questions={module.questions} />
+        <QuestionSet questions={module.questions} moduleId={slug} />
       </section>
 
       <nav className="moduleNav">
