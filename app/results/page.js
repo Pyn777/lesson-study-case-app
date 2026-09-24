@@ -110,7 +110,7 @@ export default function ResultsPage() {
   const [status, setStatus] = useState("locked");
   const [error, setError] = useState("");
   const [testStatus, setTestStatus] = useState("");
-  const [filters, setFilters] = useState({ course:"", section:"", semester:"", cohort:"", instructor:"", deliveryMode:"", module:"", question:"", studyId:"", concept:"", anchor:"" });
+  const [filters, setFilters] = useState({ course:"", section:"", semester:"", cohort:"", instructor:"", deliveryMode:"", module:"", question:"", studyId:"", concept:"", anchor:"", construct:"", cognitiveLevel:"", itemRole:"", discipline:"", transferType:"" });
 
   const filteredRows = useMemo(() => rows.filter((row) =>
     (!filters.course || row.course === filters.course) &&
@@ -123,7 +123,12 @@ export default function ResultsPage() {
     (!filters.question || row.questionId === filters.question) &&
     (!filters.studyId || row.studyId === filters.studyId) &&
     (!filters.concept || row.conceptTag === filters.concept) &&
-    (!filters.anchor || row.anchorId === filters.anchor)
+    (!filters.anchor || row.anchorId === filters.anchor) &&
+    (!filters.construct || row.construct === filters.construct) &&
+    (!filters.cognitiveLevel || row.cognitiveLevel === filters.cognitiveLevel) &&
+    (!filters.itemRole || row.itemRole === filters.itemRole) &&
+    (!filters.discipline || row.discipline === filters.discipline) &&
+    (!filters.transferType || row.transferType === filters.transferType)
   ), [rows, filters]);
 
   const optionValues = useMemo(() => ({
@@ -138,6 +143,11 @@ export default function ResultsPage() {
     studyId: [...new Set(rows.map(r=>r.studyId).filter(Boolean))].sort(),
     concept: [...new Set(rows.map(r=>r.conceptTag).filter(Boolean))].sort(),
     anchor: [...new Set(rows.map(r=>r.anchorId).filter(Boolean))].sort(),
+    construct: [...new Set(rows.map(r=>r.construct).filter(Boolean))].sort(),
+    cognitiveLevel: [...new Set(rows.map(r=>r.cognitiveLevel).filter(Boolean))].sort(),
+    itemRole: [...new Set(rows.map(r=>r.itemRole).filter(Boolean))].sort(),
+    discipline: [...new Set(rows.map(r=>r.discipline).filter(Boolean))].sort(),
+    transferType: [...new Set(rows.map(r=>r.transferType).filter(Boolean))].sort(),
   }), [rows]);
 
   const computed = useMemo(() => {
@@ -172,6 +182,9 @@ export default function ResultsPage() {
   const questionSummary = useMemo(() => summarize(filteredRows, r=>r.questionId), [filteredRows]);
   const studentSummary = useMemo(() => summarize(filteredRows, r=>r.studyId), [filteredRows]);
   const anchorSummary = useMemo(() => summarize(filteredRows.filter(r=>r.anchorId), r=>r.anchorId), [filteredRows]);
+  const constructSummary = useMemo(() => summarize(filteredRows, r=>r.construct), [filteredRows]);
+  const cognitiveSummary = useMemo(() => summarize(filteredRows, r=>r.cognitiveLevel), [filteredRows]);
+  const transferSummary = useMemo(() => summarize(filteredRows, r=>r.transferType), [filteredRows]);
 
   async function loadResults(e) {
     e?.preventDefault();
@@ -199,7 +212,7 @@ export default function ResultsPage() {
   }
 
   function exportCsv() {
-    const headers=["studyId","semester","cohort","course","section","instructor","deliveryMode","module","questionId","conceptTag","anchorId","choiceIndex","correct","attempt","firstAnswerMs","decisionMs","moduleElapsedMs","answerChanges","rapidResponseFlag","submittedAt"];
+    const headers=["studyId","semester","cohort","course","section","instructor","deliveryMode","module","questionId","conceptTag","anchorId","construct","cognitiveLevel","itemRole","discipline","transferType","choiceIndex","correct","attempt","firstAnswerMs","decisionMs","moduleElapsedMs","answerChanges","rapidResponseFlag","submittedAt"];
     const lines=[headers.join(","),...filteredRows.map(row=>headers.map(h=>csvEscape(row[h])).join(","))];
     const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
     const url=URL.createObjectURL(blob); const a=document.createElement("a");
@@ -242,14 +255,16 @@ export default function ResultsPage() {
           <section className="filterPanel">
             <div className="filterHeader">
               <div><div className="eyebrow">Filters</div><h2>Focus the dashboard</h2></div>
-              {hasFilters && <button className="secondaryButton" type="button" onClick={()=>setFilters({course:"",section:"",semester:"",cohort:"",instructor:"",deliveryMode:"",module:"",question:"",studyId:"",concept:"",anchor:""})}>Clear filters</button>}
+              {hasFilters && <button className="secondaryButton" type="button" onClick={()=>setFilters({course:"",section:"",semester:"",cohort:"",instructor:"",deliveryMode:"",module:"",question:"",studyId:"",concept:"",anchor:"",construct:"",cognitiveLevel:"",itemRole:"",discipline:"",transferType:""})}>Clear filters</button>}
             </div>
             <div className="filterGrid">
               {[
                 ["semester","Semester"],["cohort","Cohort"],["course","Course"],
                 ["section","Section"],["instructor","Instructor"],["deliveryMode","Delivery mode"],
                 ["module","Module"],["question","Question"],["studyId","Study ID"],
-                ["concept","Concept"],["anchor","Anchor family"]
+                ["concept","Concept"],["anchor","Anchor family"],["construct","Construct"],
+                ["cognitiveLevel","Cognitive level"],["itemRole","Item role"],
+                ["discipline","Discipline"],["transferType","Transfer type"]
               ].map(([key,label])=>(
                 <label key={key}>{label}
                   <select value={filters[key]} onChange={e=>setFilters({...filters,[key]:e.target.value})}>
@@ -286,6 +301,9 @@ export default function ResultsPage() {
           <BarSummary title="Accuracy by Course" rows={courseSummary} />
           <BarSummary title="Accuracy by Module" rows={moduleSummary} />
           <SummaryTable title="Longitudinal Anchor Performance" rows={anchorSummary} showStudyCount />
+          <BarSummary title="Accuracy by Construct" rows={constructSummary} />
+          <BarSummary title="Accuracy by Cognitive Level" rows={cognitiveSummary} />
+          <BarSummary title="Accuracy by Transfer Type" rows={transferSummary} />
           <SummaryTable title="Performance by Question" rows={questionSummary} />
           <SummaryTable title="Performance by Study ID" rows={studentSummary} />
 
@@ -299,9 +317,9 @@ export default function ResultsPage() {
             </div>
             {!filteredRows.length ? <p>No responses match the current filters.</p> : (
               <div className="tableWrap"><table>
-                <thead><tr><th>Study ID</th><th>Semester</th><th>Cohort</th><th>Course</th><th>Section</th><th>Instructor</th><th>Mode</th><th>Module</th><th>Question</th><th>Concept</th><th>Anchor</th><th>Correct</th><th>Attempt</th><th>Decision</th><th>First answer</th><th>Module</th><th>Changes</th><th>Rapid?</th><th>Submitted</th></tr></thead>
+                <thead><tr><th>Study ID</th><th>Semester</th><th>Cohort</th><th>Course</th><th>Section</th><th>Instructor</th><th>Mode</th><th>Module</th><th>Question</th><th>Concept</th><th>Anchor</th><th>Construct</th><th>Cognitive</th><th>Role</th><th>Discipline</th><th>Transfer</th><th>Correct</th><th>Attempt</th><th>Decision</th><th>First answer</th><th>Module</th><th>Changes</th><th>Rapid?</th><th>Submitted</th></tr></thead>
                 <tbody>{filteredRows.map(row=><tr key={row.id}>
-                  <td>{row.studyId||"—"}</td><td>{row.semester||"—"}</td><td>{row.cohort||"—"}</td><td>{row.course||"—"}</td><td>{row.section||"—"}</td><td>{row.instructor||"—"}</td><td>{row.deliveryMode||"—"}</td><td>{row.module}</td><td>{row.questionId}</td><td>{row.conceptTag||"—"}</td><td>{row.anchorId||"—"}</td><td>{row.correct?"Yes":"No"}</td><td>{row.attempt}</td><td>{row.decisionMs!=null?(row.decisionMs/1000).toFixed(1)+" s":"—"}</td><td>{row.firstAnswerMs!=null?(row.firstAnswerMs/1000).toFixed(1)+" s":"—"}</td><td>{row.moduleElapsedMs!=null?(row.moduleElapsedMs/1000).toFixed(1)+" s":"—"}</td><td>{row.answerChanges??0}</td><td>{row.rapidResponseFlag?"Flag":"—"}</td><td>{row.submittedAt?new Date(row.submittedAt).toLocaleString():"—"}</td>
+                  <td>{row.studyId||"—"}</td><td>{row.semester||"—"}</td><td>{row.cohort||"—"}</td><td>{row.course||"—"}</td><td>{row.section||"—"}</td><td>{row.instructor||"—"}</td><td>{row.deliveryMode||"—"}</td><td>{row.module}</td><td>{row.questionId}</td><td>{row.conceptTag||"—"}</td><td>{row.anchorId||"—"}</td><td>{row.construct||"—"}</td><td>{row.cognitiveLevel||"—"}</td><td>{row.itemRole||"—"}</td><td>{row.discipline||"—"}</td><td>{row.transferType||"—"}</td><td>{row.correct?"Yes":"No"}</td><td>{row.attempt}</td><td>{row.decisionMs!=null?(row.decisionMs/1000).toFixed(1)+" s":"—"}</td><td>{row.firstAnswerMs!=null?(row.firstAnswerMs/1000).toFixed(1)+" s":"—"}</td><td>{row.moduleElapsedMs!=null?(row.moduleElapsedMs/1000).toFixed(1)+" s":"—"}</td><td>{row.answerChanges??0}</td><td>{row.rapidResponseFlag?"Flag":"—"}</td><td>{row.submittedAt?new Date(row.submittedAt).toLocaleString():"—"}</td>
                 </tr>)}</tbody>
               </table></div>
             )}
