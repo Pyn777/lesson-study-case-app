@@ -19,6 +19,7 @@ export default function AssessmentPage() {
       <section className="contentPanel">
         <QuestionSet
           questions={integratedQuestions}
+          moduleId="integrated-assessment"
           submitLabel="Check integrated assessment"
         />
       </section>
