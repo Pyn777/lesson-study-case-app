@@ -28,8 +28,14 @@ export async function POST(request) {
       }
     }
 
-    const inserted = await insertResponses(rows);
-    return NextResponse.json({ ok: true, inserted: inserted.length });
+    const result = await insertResponses(rows);
+    return NextResponse.json({
+      ok: true,
+      inserted: result.inserted.length,
+      duplicate: result.duplicate,
+      canonicalAttempt: result.canonicalAttempt,
+      attemptType: result.attemptType || (result.canonicalAttempt > 1 ? "retake" : "initial"),
+    });
   } catch (error) {
     console.error("Response insert failed:", error);
     return NextResponse.json(
