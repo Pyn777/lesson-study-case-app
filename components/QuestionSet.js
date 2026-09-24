@@ -1,10 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
-export default function QuestionSet({ questions, submitLabel = "Check answers" }) {
+const RESPONSE_KEY = "lessonStudyResponses";
+const SESSION_KEY = "lessonStudySession";
+
+export default function QuestionSet({
+  questions,
+  moduleId = "unknown",
+  submitLabel = "Check answers",
+}) {
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [attempt, setAttempt] = useState(1);
+  const startedAt = useRef(Date.now());
 
   const score = useMemo(() => {
     return questions.reduce(
@@ -18,9 +27,50 @@ export default function QuestionSet({ questions, submitLabel = "Check answers" }
     setResponses((current) => ({ ...current, [questionId]: choiceIndex }));
   }
 
+  function recordResults() {
+    let session = {};
+    try {
+      session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "{}");
+    } catch {}
+
+    let existing = [];
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(RESPONSE_KEY) || "[]");
+      existing = Array.isArray(parsed) ? parsed : [];
+    } catch {}
+
+    const submittedAt = new Date().toISOString();
+    const elapsed = Date.now() - startedAt.current;
+
+    const newRows = questions.map((question) => ({
+      studyId: session.studyId || "",
+      course: session.course || "",
+      section: session.section || "",
+      module: moduleId,
+      questionId: question.id,
+      choiceIndex: responses[question.id],
+      correct: responses[question.id] === question.answer,
+      attempt,
+      responseMs: elapsed,
+      submittedAt,
+    }));
+
+    window.localStorage.setItem(
+      RESPONSE_KEY,
+      JSON.stringify([...existing, ...newRows])
+    );
+  }
+
+  function submit() {
+    recordResults();
+    setSubmitted(true);
+  }
+
   function reset() {
     setResponses({});
     setSubmitted(false);
+    setAttempt((current) => current + 1);
+    startedAt.current = Date.now();
   }
 
   return (
@@ -71,7 +121,7 @@ export default function QuestionSet({ questions, submitLabel = "Check answers" }
           <button
             className="primaryButton"
             type="button"
-            onClick={() => setSubmitted(true)}
+            onClick={submit}
             disabled={Object.keys(responses).length !== questions.length}
           >
             {submitLabel}
@@ -89,7 +139,8 @@ export default function QuestionSet({ questions, submitLabel = "Check answers" }
       </div>
 
       <p className="prototypeNote">
-        Prototype only: responses are not stored yet. Persistent longitudinal data will be added after the student flow is finalized.
+        Prototype tracking records correctness, attempt number, and elapsed response
+        time in this browser only.
       </p>
     </div>
   );
