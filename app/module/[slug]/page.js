@@ -60,6 +60,24 @@ export default async function ModulePage({ params }) {
 
       <RolePlayActivity moduleId={slug} activity={module.rolePlay} />
 
+      {slug === "microbiology" && (
+        <section className="contentPanel integrationCallout">
+          <div className="sectionHeader">
+            <div>
+              <div className="eyebrow">Laboratory extension</div>
+              <h2>Urinalysis Clinical Simulation</h2>
+            </div>
+          </div>
+          <p>
+            Continue the microbiology lens in the existing urinalysis simulation.
+            The simulation result can return to this Lesson Study app under the same anonymous Study ID.
+          </p>
+          <Link href="/urinalysis" className="primaryLink">
+            Open integrated urinalysis simulation →
+          </Link>
+        </section>
+      )}
+
       <section className="contentPanel">
         <div className="sectionHeader">
           <div>
