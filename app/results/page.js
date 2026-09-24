@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-
-const RESPONSE_KEY = "lessonStudyResponses";
+import { useMemo, useState } from "react";
 
 function csvEscape(value) {
   const text = String(value ?? "");
@@ -12,33 +10,44 @@ function csvEscape(value) {
 }
 
 export default function ResultsPage() {
+  const [accessKey, setAccessKey] = useState("");
   const [rows, setRows] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [status, setStatus] = useState("locked");
+  const [error, setError] = useState("");
 
-  useEffect(() => {
+  const computed = useMemo(() => {
+    if (summary) return summary;
+    const totalResponses = rows.length;
+    const correctResponses = rows.filter((row) => row.correct).length;
+    const avgResponseMs = totalResponses
+      ? rows.reduce((sum, row) => sum + (row.responseMs || 0), 0) / totalResponses
+      : 0;
+    const uniqueStudyIds = new Set(rows.map((row) => row.studyId).filter(Boolean)).size;
+    return { totalResponses, correctResponses, avgResponseMs, uniqueStudyIds };
+  }, [rows, summary]);
+
+  async function loadResults(e) {
+    e?.preventDefault();
+    setStatus("loading");
+    setError("");
+
     try {
-      const stored = JSON.parse(
-        window.localStorage.getItem(RESPONSE_KEY) || "[]"
-      );
-      setRows(Array.isArray(stored) ? stored : []);
-    } catch {
-      setRows([]);
+      const response = await fetch("/api/results", {
+        headers: { "x-instructor-key": accessKey },
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Unable to load results.");
+      }
+      setRows(data.rows || []);
+      setSummary(data.summary || null);
+      setStatus("ready");
+    } catch (err) {
+      setStatus("locked");
+      setError(err.message || "Unable to load results.");
     }
-  }, []);
-
-  const summary = useMemo(() => {
-    const total = rows.length;
-    const correct = rows.filter((row) => row.correct).length;
-    const avgMs =
-      total > 0
-        ? Math.round(rows.reduce((sum, row) => sum + (row.responseMs || 0), 0) / total)
-        : 0;
-    return { total, correct, avgMs };
-  }, [rows]);
-
-  function clearData() {
-    if (!window.confirm("Clear all locally stored response data in this browser?")) return;
-    window.localStorage.removeItem(RESPONSE_KEY);
-    setRows([]);
   }
 
   function exportCsv() {
@@ -76,72 +85,130 @@ export default function ResultsPage() {
       <Link href="/" className="backLink">← Back to case overview</Link>
 
       <section className="assessmentHero">
-        <div className="eyebrow">Local prototype data</div>
-        <h1>Response Results</h1>
+        <div className="eyebrow">Instructor dashboard</div>
+        <h1>Longitudinal Response Data</h1>
         <p className="lead">
-          These results are stored only in this browser. This is a prototype for
-          the future instructor dashboard and database.
+          Shared study results from the persistent database. Access is protected
+          by an instructor key configured in Vercel.
         </p>
       </section>
 
-      <section className="statsGrid">
-        <div className="statCard"><span>Responses</span><strong>{summary.total}</strong></div>
-        <div className="statCard"><span>Correct</span><strong>{summary.correct}</strong></div>
-        <div className="statCard">
-          <span>Average response time</span>
-          <strong>{summary.avgMs ? (summary.avgMs / 1000).toFixed(1) + " s" : "—"}</strong>
-        </div>
-      </section>
-
-      <section className="contentPanel">
-        <div className="sectionHeader">
-          <div>
-            <div className="eyebrow">Recorded events</div>
-            <h2>Question-level data</h2>
-          </div>
-          <div className="buttonRow">
-            <button className="secondaryButton" type="button" onClick={exportCsv} disabled={!rows.length}>
-              Export CSV
+      {status !== "ready" ? (
+        <section className="contentPanel narrowPanel">
+          <form className="accessForm" onSubmit={loadResults}>
+            <label>
+              Instructor access key
+              <input
+                type="password"
+                value={accessKey}
+                onChange={(e) => setAccessKey(e.target.value)}
+                placeholder="Enter access key"
+                required
+              />
+            </label>
+            <button className="primaryButton" type="submit" disabled={status === "loading"}>
+              {status === "loading" ? "Loading…" : "Open dashboard"}
             </button>
-            <button className="dangerButton" type="button" onClick={clearData} disabled={!rows.length}>
-              Clear local data
-            </button>
-          </div>
-        </div>
+          </form>
+          {error && <p className="errorText">{error}</p>}
+        </section>
+      ) : (
+        <>
+          <section className="statsGrid">
+            <div className="statCard">
+              <span>Responses</span>
+              <strong>{computed.totalResponses}</strong>
+            </div>
+            <div className="statCard">
+              <span>Correct</span>
+              <strong>{computed.correctResponses}</strong>
+            </div>
+            <div className="statCard">
+              <span>Average response time</span>
+              <strong>
+                {computed.avgResponseMs
+                  ? (computed.avgResponseMs / 1000).toFixed(1) + " s"
+                  : "—"}
+              </strong>
+            </div>
+            <div className="statCard">
+              <span>Study IDs</span>
+              <strong>{computed.uniqueStudyIds}</strong>
+            </div>
+          </section>
 
-        {!rows.length ? (
-          <p>No responses have been recorded in this browser yet.</p>
-        ) : (
-          <div className="tableWrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Study ID</th>
-                  <th>Course</th>
-                  <th>Module</th>
-                  <th>Question</th>
-                  <th>Correct</th>
-                  <th>Attempt</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.slice().reverse().map((row, index) => (
-                  <tr key={row.submittedAt + "-" + index}>
-                    <td>{row.studyId || "—"}</td>
-                    <td>{row.course || "—"}</td>
-                    <td>{row.module}</td>
-                    <td>{row.questionId}</td>
-                    <td>{row.correct ? "Yes" : "No"}</td>
-                    <td>{row.attempt}</td>
-                    <td>{((row.responseMs || 0) / 1000).toFixed(1)} s</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+          <section className="contentPanel">
+            <div className="sectionHeader">
+              <div>
+                <div className="eyebrow">Recorded events</div>
+                <h2>Question-level data</h2>
+              </div>
+              <div className="buttonRow">
+                <button
+                  className="secondaryButton"
+                  type="button"
+                  onClick={loadResults}
+                >
+                  Refresh
+                </button>
+                <button
+                  className="secondaryButton"
+                  type="button"
+                  onClick={exportCsv}
+                  disabled={!rows.length}
+                >
+                  Export CSV
+                </button>
+              </div>
+            </div>
+
+            {!rows.length ? (
+              <p>No database responses have been recorded yet.</p>
+            ) : (
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Study ID</th>
+                      <th>Course</th>
+                      <th>Section</th>
+                      <th>Module</th>
+                      <th>Question</th>
+                      <th>Correct</th>
+                      <th>Attempt</th>
+                      <th>Time</th>
+                      <th>Submitted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.id}>
+                        <td>{row.studyId || "—"}</td>
+                        <td>{row.course || "—"}</td>
+                        <td>{row.section || "—"}</td>
+                        <td>{row.module}</td>
+                        <td>{row.questionId}</td>
+                        <td>{row.correct ? "Yes" : "No"}</td>
+                        <td>{row.attempt}</td>
+                        <td>
+                          {row.responseMs != null
+                            ? (row.responseMs / 1000).toFixed(1) + " s"
+                            : "—"}
+                        </td>
+                        <td>
+                          {row.submittedAt
+                            ? new Date(row.submittedAt).toLocaleString()
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </>
+      )}
     </main>
   );
 }
