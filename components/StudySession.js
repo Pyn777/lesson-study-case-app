@@ -8,6 +8,10 @@ export default function StudySession() {
   const [studyId, setStudyId] = useState("");
   const [course, setCourse] = useState("");
   const [section, setSection] = useState("");
+  const [semester, setSemester] = useState("Fall 2026");
+  const [cohort, setCohort] = useState("");
+  const [instructor, setInstructor] = useState("");
+  const [deliveryMode, setDeliveryMode] = useState("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -18,6 +22,10 @@ export default function StudySession() {
         setStudyId(parsed.studyId || "");
         setCourse(parsed.course || "");
         setSection(parsed.section || "");
+        setSemester(parsed.semester || "Fall 2026");
+        setCohort(parsed.cohort || "");
+        setInstructor(parsed.instructor || "");
+        setDeliveryMode(parsed.deliveryMode || "");
         setSaved(Boolean(parsed.studyId));
       } catch {}
     }
@@ -34,6 +42,10 @@ export default function StudySession() {
         studyId: cleanId,
         course,
         section: section.trim(),
+        semester: semester.trim(),
+        cohort: cohort.trim(),
+        instructor: instructor.trim(),
+        deliveryMode,
         startedAt: new Date().toISOString(),
       })
     );
@@ -45,6 +57,10 @@ export default function StudySession() {
     setStudyId("");
     setCourse("");
     setSection("");
+    setSemester("Fall 2026");
+    setCohort("");
+    setInstructor("");
+    setDeliveryMode("");
     setSaved(false);
   }
 
@@ -57,6 +73,8 @@ export default function StudySession() {
           <span>
             {course || "Course not selected"}
             {section ? " · " + section : ""}
+            {semester ? " · " + semester : ""}
+            {deliveryMode ? " · " + deliveryMode : ""}
           </span>
         </div>
         <button type="button" className="secondaryButton" onClick={clearSession}>
@@ -106,6 +124,46 @@ export default function StudySession() {
             onChange={(e) => setSection(e.target.value)}
             placeholder="e.g., W02"
           />
+        </label>
+
+        <label>
+          Semester
+          <input
+            value={semester}
+            onChange={(e) => setSemester(e.target.value)}
+            placeholder="e.g., Fall 2026"
+          />
+        </label>
+
+        <label>
+          Cohort (optional)
+          <input
+            value={cohort}
+            onChange={(e) => setCohort(e.target.value)}
+            placeholder="e.g., 2026–27 pilot"
+          />
+        </label>
+
+        <label>
+          Instructor (optional)
+          <input
+            value={instructor}
+            onChange={(e) => setInstructor(e.target.value)}
+            placeholder="e.g., Payne"
+          />
+        </label>
+
+        <label>
+          Delivery mode (optional)
+          <select
+            value={deliveryMode}
+            onChange={(e) => setDeliveryMode(e.target.value)}
+          >
+            <option value="">Select mode</option>
+            <option>Online</option>
+            <option>On-ground</option>
+            <option>Hybrid</option>
+          </select>
         </label>
 
         <button className="primaryButton" type="submit">
