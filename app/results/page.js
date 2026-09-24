@@ -103,6 +103,133 @@ function buildAnchorRepeatedMeasures(rows) {
   }).sort((a, b) => a.studyId.localeCompare(b.studyId));
 }
 
+
+function buildModuleTrend(rows) {
+  const grouped = new Map();
+
+  for (const row of rows) {
+    const module = row.module || "unknown";
+    if (!grouped.has(module)) {
+      grouped.set(module, {
+        module,
+        order: MODULE_ORDER[module] ?? 99,
+        label: MODULE_LABEL[module] || module,
+        responses: 0,
+        correct: 0,
+        decisionMs: 0,
+        studyIds: new Set(),
+      });
+    }
+
+    const item = grouped.get(module);
+    item.responses += 1;
+    item.correct += row.correct ? 1 : 0;
+    item.decisionMs += Number(row.decisionMs ?? row.responseMs ?? 0);
+    if (row.studyId) item.studyIds.add(row.studyId);
+  }
+
+  return [...grouped.values()]
+    .map((item) => ({
+      ...item,
+      accuracy: item.responses ? (item.correct / item.responses) * 100 : 0,
+      avgDecisionMs: item.responses ? item.decisionMs / item.responses : 0,
+      studyCount: item.studyIds.size,
+    }))
+    .sort((a, b) => a.order - b.order || a.module.localeCompare(b.module));
+}
+
+function TrendChart({ title, points, valueKey, formatValue, lowerIsBetter = false }) {
+  if (!points.length) {
+    return (
+      <section className="contentPanel">
+        <div className="eyebrow">Group trend</div>
+        <h2>{title}</h2>
+        <p>No data available yet.</p>
+      </section>
+    );
+  }
+
+  const values = points.map((point) => Number(point[valueKey] || 0));
+  const max = Math.max(...values, 1);
+  const min = Math.min(...values, 0);
+  const span = Math.max(max - min, 1);
+  const width = 760;
+  const height = 240;
+  const left = 48;
+  const right = 24;
+  const top = 24;
+  const bottom = 52;
+  const chartWidth = width - left - right;
+  const chartHeight = height - top - bottom;
+  const xStep = points.length > 1 ? chartWidth / (points.length - 1) : 0;
+
+  const coords = points.map((point, index) => {
+    const value = Number(point[valueKey] || 0);
+    const x = left + index * xStep;
+    const y = top + (1 - (value - min) / span) * chartHeight;
+    return { ...point, value, x, y };
+  });
+
+  const first = coords[0];
+  const last = coords[coords.length - 1];
+  const delta = last.value - first.value;
+  const interpretedDelta = lowerIsBetter ? -delta : delta;
+
+  return (
+    <section className="contentPanel">
+      <div className="sectionHeader">
+        <div>
+          <div className="eyebrow">Group trend</div>
+          <h2>{title}</h2>
+        </div>
+        <div className="trendDelta">
+          <span>First → latest</span>
+          <strong>
+            {delta > 0 ? "+" : ""}{formatValue(delta, true)}
+          </strong>
+          <small>
+            {interpretedDelta > 0 ? "higher / faster trend" : interpretedDelta < 0 ? "lower / slower trend" : "no change"}
+          </small>
+        </div>
+      </div>
+
+      <div className="trendChartWrap">
+        <svg className="trendChart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
+          <line x1={left} y1={top + chartHeight} x2={width - right} y2={top + chartHeight} className="trendAxis" />
+          <polyline
+            points={coords.map((point) => `${point.x},${point.y}`).join(" ")}
+            className="trendLine"
+            fill="none"
+          />
+          {coords.map((point) => (
+            <g key={point.module}>
+              <circle cx={point.x} cy={point.y} r="6" className="trendPoint" />
+              <text x={point.x} y={point.y - 12} textAnchor="middle" className="trendValue">
+                {formatValue(point.value)}
+              </text>
+              <text x={point.x} y={height - 24} textAnchor="middle" className="trendLabel">
+                {point.label}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      <div className="trendMetaGrid">
+        {points.map((point) => (
+          <div className="trendMetaCard" key={point.module}>
+            <strong>{point.label}</strong>
+            <span>{point.studyCount} Study IDs · {point.responses} responses</span>
+          </div>
+        ))}
+      </div>
+      <p className="prototypeNote">
+        Group-level trends summarize all responses matching the current filters. They do not by themselves represent a matched pre/post comparison.
+      </p>
+    </section>
+  );
+}
+
 function Delta({ value, suffix = "", inverse = false }) {
   if (!Number.isFinite(value)) return <>—</>;
   const rounded = Math.abs(value) >= 10 ? value.toFixed(1) : value.toFixed(2);
@@ -296,6 +423,7 @@ export default function ResultsPage() {
   const transferSummary = useMemo(() => summarize(filteredRows, r=>r.transferType), [filteredRows]);
   const repeatedMeasures = useMemo(() => buildRepeatedMeasures(filteredRows), [filteredRows]);
   const anchorRepeatedMeasures = useMemo(() => buildAnchorRepeatedMeasures(filteredRows), [filteredRows]);
+  const moduleTrend = useMemo(() => buildModuleTrend(filteredRows), [filteredRows]);
 
   async function loadResults(e) {
     e?.preventDefault();
@@ -411,6 +539,21 @@ export default function ResultsPage() {
           <BarSummary title="Accuracy by Delivery Mode" rows={deliverySummary} />
           <BarSummary title="Accuracy by Course" rows={courseSummary} />
           <BarSummary title="Accuracy by Module" rows={moduleSummary} />
+
+          <TrendChart
+            title="Accuracy across the module sequence"
+            points={moduleTrend}
+            valueKey="accuracy"
+            formatValue={(value, delta = false) => delta ? value.toFixed(1) + " pp" : value.toFixed(1) + "%"}
+          />
+          <TrendChart
+            title="Average decision interval across the module sequence"
+            points={moduleTrend}
+            valueKey="avgDecisionMs"
+            lowerIsBetter
+            formatValue={(value, delta = false) => (value / 1000).toFixed(1) + " s"}
+          />
+
           <SummaryTable title="Longitudinal Anchor Performance" rows={anchorSummary} showStudyCount />
           <BarSummary title="Accuracy by Construct" rows={constructSummary} />
           <BarSummary title="Accuracy by Cognitive Level" rows={cognitiveSummary} />
