@@ -36,7 +36,7 @@ export default async function HomePage() {
       </section>
 
       <StudySession />
-      <CaseRecord compact />
+      <CaseRecord compact activeModules={settings.activeModules} />
 
       <section className="progressStrip" aria-label="Course progression">
         {moduleEntries.map(([slug, module], index) => (
