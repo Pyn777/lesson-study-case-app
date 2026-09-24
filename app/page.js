@@ -35,6 +35,16 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="privacyBanner">
+        <div>
+          <strong>Use an anonymous Study ID only.</strong>
+          <span>
+            Do not enter names, email addresses, college IDs, or other directly identifying information.
+          </span>
+        </div>
+        <Link href="/privacy" className="secondaryLink">Privacy & data use</Link>
+      </section>
+
       <StudySession />
       <CaseRecord compact activeModules={settings.activeModules} />
 
@@ -95,15 +105,15 @@ export default async function HomePage() {
       <section className="next">
         <div>
           <div className="eyebrow">Current build</div>
-          <h2>Student flow is now interactive</h2>
+          <h2>Longitudinal case and study tools are active</h2>
           <p>
-            The first version includes the shared case, three course lenses, question
-            feedback, and an integrated assessment. Data storage and the instructor
-            dashboard come next.
+            The app now includes the shared case sequence, persistent response storage,
+            longitudinal timing and anchor data, instructor controls, data-quality checks,
+            and a protected instructor dashboard.
           </p>
         </div>
         <div className="buttonRow">
-          <Link href="/results" className="secondaryLink">View local results</Link>
+          <Link href="/results" className="secondaryLink">Instructor dashboard</Link>
           {firstActiveSlug ? (
             <Link href={"/module/" + firstActiveSlug} className="primaryLink">
               Start the case →
