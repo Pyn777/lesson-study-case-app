@@ -344,6 +344,7 @@ export default function ResultsPage() {
   const [accessKey, setAccessKey] = useState("");
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [audit, setAudit] = useState([]);
   const [status, setStatus] = useState("locked");
   const [error, setError] = useState("");
   const [testStatus, setTestStatus] = useState("");
@@ -411,6 +412,19 @@ export default function ResultsPage() {
     return { totalResponses, correctResponses, avgResponseMs, avgModuleMs, rapidResponses, uniqueStudyIds };
   }, [filteredRows]);
 
+  const qualitySummary = useMemo(() => {
+    const filteredAudit = audit.filter((entry) => {
+      if (filters.studyId && entry.studyId !== filters.studyId) return false;
+      if (filters.module && entry.module !== filters.module) return false;
+      if (filters.semester && entry.semester !== filters.semester) return false;
+      return true;
+    });
+    const initial = filteredAudit.filter((entry) => entry.attemptType === "initial").length;
+    const retakes = filteredAudit.filter((entry) => entry.attemptType === "retake").length;
+    const accepted = filteredAudit.filter((entry) => entry.status === "accepted").length;
+    return { filteredAudit, initial, retakes, accepted };
+  }, [audit, filters.studyId, filters.module, filters.semester]);
+
   const courseSummary = useMemo(() => summarize(filteredRows, r=>r.course), [filteredRows]);
   const semesterSummary = useMemo(() => summarize(filteredRows, r=>r.semester), [filteredRows]);
   const cohortSummary = useMemo(() => summarize(filteredRows, r=>r.cohort), [filteredRows]);
@@ -433,7 +447,10 @@ export default function ResultsPage() {
       const response = await fetch("/api/results", { headers: { "x-instructor-key": accessKey }, cache: "no-store" });
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || "Unable to load results.");
-      setRows(data.rows || []); setSummary(data.summary || null); setStatus("ready");
+      setRows(data.rows || []);
+      setSummary(data.summary || null);
+      setAudit(data.audit || []);
+      setStatus("ready");
     } catch (err) {
       setStatus("locked"); setError(err.message || "Unable to load results.");
     }
@@ -452,7 +469,7 @@ export default function ResultsPage() {
   }
 
   function exportCsv() {
-    const headers=["studyId","semester","cohort","course","section","instructor","deliveryMode","module","questionId","conceptTag","anchorId","construct","cognitiveLevel","itemRole","discipline","transferType","choiceIndex","correct","attempt","firstAnswerMs","decisionMs","moduleElapsedMs","answerChanges","rapidResponseFlag","submittedAt"];
+    const headers=["studyId","submissionId","sessionId","semester","cohort","course","section","instructor","deliveryMode","module","questionId","conceptTag","anchorId","construct","cognitiveLevel","itemRole","discipline","transferType","choiceIndex","correct","attempt","clientAttempt","attemptType","firstAnswerMs","decisionMs","moduleElapsedMs","answerChanges","rapidResponseFlag","submittedAt","receivedAt"];
     const lines=[headers.join(","),...filteredRows.map(row=>headers.map(h=>csvEscape(row[h])).join(","))];
     const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
     const url=URL.createObjectURL(blob); const a=document.createElement("a");
@@ -525,6 +542,65 @@ export default function ResultsPage() {
             <div className="statCard"><span>Avg. module time</span><strong>{computed.avgModuleMs?(computed.avgModuleMs/1000).toFixed(1)+" s":"—"}</strong></div>
             <div className="statCard"><span>Rapid-response flags</span><strong>{computed.rapidResponses}</strong></div>
             <div className="statCard"><span>Study IDs</span><strong>{computed.uniqueStudyIds}</strong></div>
+          </section>
+
+
+          <section className="contentPanel">
+            <div className="sectionHeader">
+              <div>
+                <div className="eyebrow">Data quality</div>
+                <h2>Submission integrity</h2>
+              </div>
+            </div>
+
+            <div className="statsGrid">
+              <div className="statCard"><span>Accepted submissions</span><strong>{qualitySummary.accepted}</strong></div>
+              <div className="statCard"><span>Initial attempts</span><strong>{qualitySummary.initial}</strong></div>
+              <div className="statCard"><span>Retakes</span><strong>{qualitySummary.retakes}</strong></div>
+              <div className="statCard"><span>Rapid-response flags</span><strong>{computed.rapidResponses}</strong></div>
+            </div>
+
+            <p className="prototypeNote">
+              Each submission receives a unique ID. Repeated network delivery of the same submission is ignored rather than stored twice.
+              Retake numbering is assigned on the server by Study ID, module, and semester. The audit trail records accepted submissions without storing names or IP addresses.
+            </p>
+
+            {!qualitySummary.filteredAudit.length ? (
+              <p>No submission audit entries match the current Study ID, module, and semester filters.</p>
+            ) : (
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Submission ID</th>
+                      <th>Study ID</th>
+                      <th>Module</th>
+                      <th>Semester</th>
+                      <th>Attempt</th>
+                      <th>Type</th>
+                      <th>Rows</th>
+                      <th>Submitted</th>
+                      <th>Received</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {qualitySummary.filteredAudit.slice(0, 250).map((entry) => (
+                      <tr key={entry.submissionId}>
+                        <td>{entry.submissionId}</td>
+                        <td>{entry.studyId || "—"}</td>
+                        <td>{entry.module}</td>
+                        <td>{entry.semester || "—"}</td>
+                        <td>{entry.canonicalAttempt}</td>
+                        <td>{entry.attemptType || "—"}</td>
+                        <td>{entry.rowCount}</td>
+                        <td>{entry.submittedAt ? new Date(entry.submittedAt).toLocaleString() : "—"}</td>
+                        <td>{entry.receivedAt ? new Date(entry.receivedAt).toLocaleString() : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
 
           <section className="contentPanel">
@@ -665,9 +741,9 @@ export default function ResultsPage() {
             </div>
             {!filteredRows.length ? <p>No responses match the current filters.</p> : (
               <div className="tableWrap"><table>
-                <thead><tr><th>Study ID</th><th>Semester</th><th>Cohort</th><th>Course</th><th>Section</th><th>Instructor</th><th>Mode</th><th>Module</th><th>Question</th><th>Concept</th><th>Anchor</th><th>Construct</th><th>Cognitive</th><th>Role</th><th>Discipline</th><th>Transfer</th><th>Correct</th><th>Attempt</th><th>Decision</th><th>First answer</th><th>Module</th><th>Changes</th><th>Rapid?</th><th>Submitted</th></tr></thead>
+                <thead><tr><th>Study ID</th><th>Submission</th><th>Session</th><th>Semester</th><th>Cohort</th><th>Course</th><th>Section</th><th>Instructor</th><th>Mode</th><th>Module</th><th>Question</th><th>Concept</th><th>Anchor</th><th>Construct</th><th>Cognitive</th><th>Role</th><th>Discipline</th><th>Transfer</th><th>Correct</th><th>Attempt</th><th>Type</th><th>Decision</th><th>First answer</th><th>Module</th><th>Changes</th><th>Rapid?</th><th>Submitted</th></tr></thead>
                 <tbody>{filteredRows.map(row=><tr key={row.id}>
-                  <td>{row.studyId||"—"}</td><td>{row.semester||"—"}</td><td>{row.cohort||"—"}</td><td>{row.course||"—"}</td><td>{row.section||"—"}</td><td>{row.instructor||"—"}</td><td>{row.deliveryMode||"—"}</td><td>{row.module}</td><td>{row.questionId}</td><td>{row.conceptTag||"—"}</td><td>{row.anchorId||"—"}</td><td>{row.construct||"—"}</td><td>{row.cognitiveLevel||"—"}</td><td>{row.itemRole||"—"}</td><td>{row.discipline||"—"}</td><td>{row.transferType||"—"}</td><td>{row.correct?"Yes":"No"}</td><td>{row.attempt}</td><td>{row.decisionMs!=null?(row.decisionMs/1000).toFixed(1)+" s":"—"}</td><td>{row.firstAnswerMs!=null?(row.firstAnswerMs/1000).toFixed(1)+" s":"—"}</td><td>{row.moduleElapsedMs!=null?(row.moduleElapsedMs/1000).toFixed(1)+" s":"—"}</td><td>{row.answerChanges??0}</td><td>{row.rapidResponseFlag?"Flag":"—"}</td><td>{row.submittedAt?new Date(row.submittedAt).toLocaleString():"—"}</td>
+                  <td>{row.studyId||"—"}</td><td>{row.submissionId||"—"}</td><td>{row.sessionId||"—"}</td><td>{row.semester||"—"}</td><td>{row.cohort||"—"}</td><td>{row.course||"—"}</td><td>{row.section||"—"}</td><td>{row.instructor||"—"}</td><td>{row.deliveryMode||"—"}</td><td>{row.module}</td><td>{row.questionId}</td><td>{row.conceptTag||"—"}</td><td>{row.anchorId||"—"}</td><td>{row.construct||"—"}</td><td>{row.cognitiveLevel||"—"}</td><td>{row.itemRole||"—"}</td><td>{row.discipline||"—"}</td><td>{row.transferType||"—"}</td><td>{row.correct?"Yes":"No"}</td><td>{row.attempt}</td><td>{row.attemptType||"—"}</td><td>{row.decisionMs!=null?(row.decisionMs/1000).toFixed(1)+" s":"—"}</td><td>{row.firstAnswerMs!=null?(row.firstAnswerMs/1000).toFixed(1)+" s":"—"}</td><td>{row.moduleElapsedMs!=null?(row.moduleElapsedMs/1000).toFixed(1)+" s":"—"}</td><td>{row.answerChanges??0}</td><td>{row.rapidResponseFlag?"Flag":"—"}</td><td>{row.submittedAt?new Date(row.submittedAt).toLocaleString():"—"}</td>
                 </tr>)}</tbody>
               </table></div>
             )}
