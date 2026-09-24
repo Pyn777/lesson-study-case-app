@@ -148,3 +148,5 @@ th { color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spac
 @media (max-width:560px) {
   .filterGrid { grid-template-columns:1fr; }
 }
+
+.progressionStep { white-space: nowrap; }
