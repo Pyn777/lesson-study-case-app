@@ -20,6 +20,7 @@ export const modules = {
     questions: [
       {
         id: "cell-1",
+        conceptTag: "osmosis-tonicity",
         prompt:
           "If extracellular fluid becomes more concentrated because of water loss, what is the most likely immediate effect on nearby cells?",
         choices: [
@@ -34,6 +35,7 @@ export const modules = {
       },
       {
         id: "cell-2",
+        conceptTag: "osmosis",
         prompt:
           "Which process best explains the movement of water across a selectively permeable membrane?",
         choices: ["Active transport", "Osmosis", "Endocytosis", "Exocytosis"],
@@ -43,6 +45,8 @@ export const modules = {
       },
       {
         id: "cell-3",
+        conceptTag: "integrated-fluid-balance",
+        anchorId: "fluid-balance-throughline",
         prompt:
           "Why is membrane transport relevant to the larger dehydration case?",
         choices: [
@@ -72,6 +76,7 @@ export const modules = {
     questions: [
       {
         id: "micro-1",
+        conceptTag: "bacterial-identification",
         prompt:
           "Which finding would be most useful for distinguishing among bacterial isolates in a teaching laboratory?",
         choices: [
@@ -86,6 +91,8 @@ export const modules = {
       },
       {
         id: "micro-2",
+        conceptTag: "integrated-fluid-balance",
+        anchorId: "fluid-balance-throughline",
         prompt:
           "How does the microbiology portion connect most directly to the shared dehydration case?",
         choices: [
@@ -100,6 +107,7 @@ export const modules = {
       },
       {
         id: "micro-3",
+        conceptTag: "microbiology-reasoning",
         prompt:
           "Which sequence best reflects the microbiology reasoning process in this case?",
         choices: [
@@ -129,6 +137,7 @@ export const modules = {
     questions: [
       {
         id: "renal-1",
+        conceptTag: "renal-water-conservation",
         prompt:
           "During dehydration, which response would help conserve body water?",
         choices: [
@@ -143,6 +152,7 @@ export const modules = {
       },
       {
         id: "renal-2",
+        conceptTag: "nephron-fluid-balance",
         prompt:
           "Why is nephron physiology important in this case?",
         choices: [
@@ -157,6 +167,8 @@ export const modules = {
       },
       {
         id: "renal-3",
+        conceptTag: "integrated-fluid-balance",
+        anchorId: "fluid-balance-throughline",
         prompt:
           "Which statement best integrates the three disciplinary lenses?",
         choices: [
@@ -176,6 +188,8 @@ export const modules = {
 export const integratedQuestions = [
   {
     id: "integrated-1",
+    conceptTag: "integrated-fluid-balance",
+    anchorId: "fluid-balance-throughline",
     prompt:
       "Which sequence best represents the shared case across disciplines?",
     choices: [
@@ -190,6 +204,7 @@ export const integratedQuestions = [
   },
   {
     id: "integrated-2",
+    conceptTag: "interdisciplinary-transfer",
     prompt:
       "What is the strongest reason to revisit the same case in multiple courses?",
     choices: [
