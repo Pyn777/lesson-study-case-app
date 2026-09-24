@@ -13,7 +13,9 @@ export default function QuestionSet({
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [attempt, setAttempt] = useState(1);
+  const [saveState, setSaveState] = useState("idle");
   const startedAt = useRef(Date.now());
+  const answerTimes = useRef({});
 
   const score = useMemo(() => {
     return questions.reduce(
@@ -25,24 +27,18 @@ export default function QuestionSet({
   function choose(questionId, choiceIndex) {
     if (submitted) return;
     setResponses((current) => ({ ...current, [questionId]: choiceIndex }));
+    answerTimes.current[questionId] = Date.now() - startedAt.current;
   }
 
-  function recordResults() {
+  function buildRows() {
     let session = {};
     try {
       session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || "{}");
     } catch {}
 
-    let existing = [];
-    try {
-      const parsed = JSON.parse(window.localStorage.getItem(RESPONSE_KEY) || "[]");
-      existing = Array.isArray(parsed) ? parsed : [];
-    } catch {}
-
     const submittedAt = new Date().toISOString();
-    const elapsed = Date.now() - startedAt.current;
 
-    const newRows = questions.map((question) => ({
+    return questions.map((question) => ({
       studyId: session.studyId || "",
       course: session.course || "",
       section: session.section || "",
@@ -51,26 +47,54 @@ export default function QuestionSet({
       choiceIndex: responses[question.id],
       correct: responses[question.id] === question.answer,
       attempt,
-      responseMs: elapsed,
+      responseMs: answerTimes.current[question.id] ?? Date.now() - startedAt.current,
       submittedAt,
     }));
+  }
+
+  function saveLocal(rows) {
+    let existing = [];
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(RESPONSE_KEY) || "[]");
+      existing = Array.isArray(parsed) ? parsed : [];
+    } catch {}
 
     window.localStorage.setItem(
       RESPONSE_KEY,
-      JSON.stringify([...existing, ...newRows])
+      JSON.stringify([...existing, ...rows])
     );
   }
 
-  function submit() {
-    recordResults();
+  async function savePersistent(rows) {
+    try {
+      setSaveState("saving");
+      const response = await fetch("/api/responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rows }),
+      });
+
+      if (!response.ok) throw new Error("save failed");
+      setSaveState("saved");
+    } catch {
+      setSaveState("local-only");
+    }
+  }
+
+  async function submit() {
+    const rows = buildRows();
+    saveLocal(rows);
     setSubmitted(true);
+    await savePersistent(rows);
   }
 
   function reset() {
     setResponses({});
     setSubmitted(false);
     setAttempt((current) => current + 1);
+    setSaveState("idle");
     startedAt.current = Date.now();
+    answerTimes.current = {};
   }
 
   return (
@@ -138,10 +162,14 @@ export default function QuestionSet({
         )}
       </div>
 
-      <p className="prototypeNote">
-        Prototype tracking records correctness, attempt number, and elapsed response
-        time in this browser only.
-      </p>
+      {submitted && (
+        <p className="prototypeNote">
+          {saveState === "saving" && "Saving response data…"}
+          {saveState === "saved" && "Response data saved to the shared study database."}
+          {saveState === "local-only" &&
+            "Database save is not available yet. A local browser copy was kept instead."}
+        </p>
+      )}
     </div>
   );
 }
