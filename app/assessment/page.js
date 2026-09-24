@@ -10,6 +10,8 @@ export const dynamic = "force-dynamic";
 export default async function AssessmentPage() {
   const settings = await getStudySettings();
   if (!settings.activeModules.includes("integrated-assessment")) notFound();
+  const previousModule = ["renal-response", "microbiology", "cellular-foundation"]
+    .find((id) => settings.activeModules.includes(id));
   return (
     <main className="shell">
       <Link href="/" className="backLink">← Back to case overview</Link>
@@ -23,7 +25,7 @@ export default async function AssessmentPage() {
         </p>
       </section>
 
-      <CaseRecord currentStage="integrated-assessment" />
+      <CaseRecord currentStage="integrated-assessment" activeModules={settings.activeModules} />
 
       <section className="contentPanel">
         <QuestionSet
@@ -35,9 +37,15 @@ export default async function AssessmentPage() {
       </section>
 
       <div className="moduleNav">
-        <Link href="/module/renal-response" className="secondaryLink">
-          ← Return to A&P II
-        </Link>
+        {previousModule ? (
+          <Link href={"/module/" + previousModule} className="secondaryLink">
+            ← Return to previous lens
+          </Link>
+        ) : (
+          <Link href="/" className="secondaryLink">
+            ← Return to case overview
+          </Link>
+        )}
         <Link href="/" className="primaryLink">Return to case overview</Link>
       </div>
     </main>
