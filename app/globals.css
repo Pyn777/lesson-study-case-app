@@ -112,3 +112,18 @@ th { color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spac
 @media (max-width:900px) {
   .sessionCard, .sessionForm, .statsGrid { grid-template-columns:1fr; }
 }
+
+
+.narrowPanel { max-width:620px; margin-left:auto; margin-right:auto; }
+.accessForm { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:end; }
+.accessForm label { display:flex; flex-direction:column; gap:7px; color:var(--muted); font-size:.86rem; font-weight:700; }
+.accessForm input { padding:11px 12px; border:1px solid #cdd9e5; border-radius:10px; background:#fff; color:var(--ink); }
+.errorText { margin:14px 0 0; padding:12px 14px; border-radius:10px; background:#fff0f0; color:#8c3434; }
+.statsGrid { grid-template-columns:repeat(4,1fr); }
+@media (max-width:900px) {
+  .accessForm { grid-template-columns:1fr; }
+  .statsGrid { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:560px) {
+  .statsGrid { grid-template-columns:1fr; }
+}
