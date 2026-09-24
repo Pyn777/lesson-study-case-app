@@ -22,6 +22,28 @@ export const modules = {
         "Cellular water movement depends on extracellular solute concentration",
       ],
     },
+    rolePlay: {
+      title: "Communicate the cellular finding",
+      prompt:
+        "Choose a professional perspective and prepare a structured handoff using the evidence from this stage of the case.",
+      roles: [
+        "Bedside clinician",
+        "Cell physiology consultant",
+      ],
+      claims: [
+        "The camper's fluid loss is changing extracellular concentration and driving water out of cells.",
+        "The immediate cellular concern is altered water distribution caused by osmosis.",
+      ],
+      evidenceOptions: [
+        "Repeated vomiting and diarrhea for 18 hours",
+        "Intense thirst and dizziness",
+        "A relatively hypertonic extracellular environment draws water out of cells",
+      ],
+      actions: [
+        "Communicate the cellular fluid-shift mechanism to the next clinical team.",
+        "Flag dehydration as the key process that later systems must compensate for.",
+      ],
+    },
     objectives: [
       "Relate diffusion and osmosis to fluid shifts.",
       "Apply tonicity concepts to a dehydration scenario.",
@@ -101,6 +123,29 @@ export const modules = {
         "Multiple campers develop similar gastrointestinal symptoms",
         "Culture findings suggest a bacterial source",
         "Biochemical test patterns help distinguish bacterial isolates",
+      ],
+    },
+    rolePlay: {
+      title: "Communicate the microbiology finding",
+      prompt:
+        "Choose a microbiology-focused role and hand off the most relevant finding to the rest of the team.",
+      roles: [
+        "Clinical microbiologist",
+        "Medical laboratory scientist",
+        "Infection prevention specialist",
+      ],
+      claims: [
+        "The clustered gastrointestinal illness is consistent with an infectious source that could explain the ongoing fluid loss.",
+        "Culture and biochemical evidence should be used together to narrow the likely bacterial cause.",
+      ],
+      evidenceOptions: [
+        "Multiple campers developed similar gastrointestinal symptoms",
+        "Culture findings suggest a bacterial source",
+        "Biochemical test patterns help distinguish bacterial isolates",
+      ],
+      actions: [
+        "Report the likely infectious contribution to the care team.",
+        "Recommend integrating microbiology findings with the dehydration and fluid-balance findings.",
       ],
     },
     objectives: [
@@ -187,6 +232,29 @@ export const modules = {
         "Persistent dehydration",
         "Reduced blood volume and blood pressure",
         "Renal compensation increases water conservation",
+      ],
+    },
+    rolePlay: {
+      title: "Communicate the renal response",
+      prompt:
+        "Choose a systems-level role and communicate how the kidneys are responding to the camper's dehydration.",
+      roles: [
+        "Physician",
+        "Renal physiology consultant",
+        "Nurse communicating the fluid-balance status",
+      ],
+      claims: [
+        "Reduced body water is lowering blood volume and pressure, so renal water conservation is expected.",
+        "The kidneys are part of the compensatory response to restore fluid and electrolyte homeostasis.",
+      ],
+      evidenceOptions: [
+        "Persistent dehydration",
+        "Reduced blood volume and blood pressure",
+        "Increased renal water conservation produces more concentrated urine",
+      ],
+      actions: [
+        "Communicate the renal compensation to the interdisciplinary team.",
+        "Connect the renal response back to the infectious cause and cellular fluid shifts.",
       ],
     },
     objectives: [
@@ -313,5 +381,31 @@ export const integratedFinding = {
     "Infectious process produces gastrointestinal fluid loss",
     "Membrane transport explains cellular fluid shifts",
     "Kidney responses help restore fluid and electrolyte homeostasis",
+  ],
+};
+
+
+export const integratedRolePlay = {
+  title: "Interdisciplinary team handoff",
+  prompt:
+    "Choose a role and prepare the final structured handoff that connects the full case across disciplines.",
+  roles: [
+    "Physician leading the case conference",
+    "Clinical microbiologist",
+    "Medical laboratory scientist",
+    "Nurse coordinating care",
+  ],
+  claims: [
+    "The case links an infectious gastrointestinal illness to fluid loss, cellular water shifts, and renal compensation.",
+    "The strongest interpretation requires integrating microbiology, membrane transport, and renal physiology rather than treating them as separate problems.",
+  ],
+  evidenceOptions: [
+    "The illness pattern supports an infectious gastrointestinal source",
+    "Fluid loss changes extracellular concentration and cellular water movement",
+    "Reduced blood volume and pressure trigger renal water conservation",
+  ],
+  actions: [
+    "Present the integrated explanation to the interdisciplinary team.",
+    "Identify which additional evidence would be most useful if the case continued.",
   ],
 };
