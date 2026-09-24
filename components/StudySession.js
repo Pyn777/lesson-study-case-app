@@ -12,6 +12,7 @@ export default function StudySession() {
   const [cohort, setCohort] = useState("");
   const [instructor, setInstructor] = useState("");
   const [deliveryMode, setDeliveryMode] = useState("");
+  const [privacyAcknowledged, setPrivacyAcknowledged] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export default function StudySession() {
         setCohort(parsed.cohort || "");
         setInstructor(parsed.instructor || "");
         setDeliveryMode(parsed.deliveryMode || "");
+        setPrivacyAcknowledged(Boolean(parsed.privacyAcknowledged));
         setSaved(Boolean(parsed.studyId));
       } catch {}
     }
@@ -34,7 +36,7 @@ export default function StudySession() {
   function saveSession(e) {
     e.preventDefault();
     const cleanId = studyId.trim();
-    if (!cleanId) return;
+    if (!cleanId || !privacyAcknowledged) return;
 
     window.localStorage.setItem(
       STORAGE_KEY,
@@ -46,6 +48,7 @@ export default function StudySession() {
         cohort: cohort.trim(),
         instructor: instructor.trim(),
         deliveryMode,
+        privacyAcknowledged: true,
         startedAt: new Date().toISOString(),
       })
     );
@@ -61,6 +64,7 @@ export default function StudySession() {
     setCohort("");
     setInstructor("");
     setDeliveryMode("");
+    setPrivacyAcknowledged(false);
     setSaved(false);
   }
 
@@ -90,8 +94,8 @@ export default function StudySession() {
         <div className="eyebrow">Optional study session</div>
         <h2>Set an anonymous study ID</h2>
         <p>
-          Use a study code rather than a student name. This prototype stores the
-          session only in this browser.
+          Use only an assigned study code. Do not enter a student name, email
+          address, college ID, or other directly identifying information.
         </p>
       </div>
 
@@ -166,7 +170,20 @@ export default function StudySession() {
           </select>
         </label>
 
-        <button className="primaryButton" type="submit">
+        <label className="privacyAcknowledge">
+          <input
+            type="checkbox"
+            checked={privacyAcknowledged}
+            onChange={(e) => setPrivacyAcknowledged(e.target.checked)}
+            required
+          />
+          <span>
+            I understand that I should use only an anonymous study code and not
+            enter my name, email address, or college ID.
+          </span>
+        </label>
+
+        <button className="primaryButton" type="submit" disabled={!privacyAcknowledged}>
           Start session
         </button>
       </form>
