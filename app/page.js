@@ -1,35 +1,9 @@
-const modules = [
-  {
-    id: 'genbio',
-    title: 'General Biology / A&P I',
-    subtitle: 'Cellular Foundation',
-    items: [
-      'Membrane transport, diffusion, and osmosis',
-      'Water and solute movement',
-      'Foundation for understanding fluid shifts'
-    ]
-  },
-  {
-    id: 'micro',
-    title: 'Microbiology',
-    subtitle: 'Infectious-Disease Lens',
-    items: [
-      'Identify likely pathogen or bacterial culture',
-      'Use microbiology evidence to interpret illness',
-      'Connect infection to fluid loss and dehydration'
-    ]
-  },
-  {
-    id: 'ap2',
-    title: 'A&P II',
-    subtitle: 'Systems Perspective',
-    items: [
-      'Nephron physiology and kidney function',
-      'Fluid and electrolyte balance',
-      'Blood pressure, homeostasis, and compensation'
-    ]
-  }
-];
+import Link from "next/link";
+import { modules, sharedCase } from "../data/caseData";
+
+const moduleEntries = Object.entries(modules).sort(
+  (a, b) => a[1].order - b[1].order
+);
 
 export default function HomePage() {
   return (
@@ -37,14 +11,16 @@ export default function HomePage() {
       <section className="hero">
         <div className="eyebrow">Lesson Study Prototype</div>
         <h1>Interdisciplinary Case Study App</h1>
-        <p className="lead">One longitudinal case, revisited through multiple disciplinary lenses.</p>
+        <p className="lead">
+          One longitudinal case, revisited through multiple disciplinary lenses.
+        </p>
       </section>
 
       <section className="caseCard">
         <div>
           <span className="pill">Shared case</span>
-          <h2>Summer Camp Gastrointestinal Outbreak</h2>
-          <p>Several campers develop vomiting, diarrhea, dehydration, and possible electrolyte disturbances.</p>
+          <h2>{sharedCase.title}</h2>
+          <p>{sharedCase.intro}</p>
         </div>
         <div className="caseMeta">
           <strong>Different lenses, one common problem.</strong>
@@ -52,16 +28,32 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="progressStrip" aria-label="Course progression">
+        {moduleEntries.map(([slug, module], index) => (
+          <div className="progressItem" key={slug}>
+            <span className="progressNumber">{module.order}</span>
+            <span>{module.lens}</span>
+            {index < moduleEntries.length - 1 && <span className="progressArrow">→</span>}
+          </div>
+        ))}
+        <div className="progressItem">
+          <span className="progressNumber">4</span>
+          <span>Integrated Assessment</span>
+        </div>
+      </section>
+
       <section className="grid">
-        {modules.map((module, index) => (
-          <article key={module.id} className={`module module-${index + 1}`}>
-            <div className="moduleNumber">{index + 1}</div>
-            <h3>{module.title}</h3>
-            <p className="subtitle">{module.subtitle}</p>
+        {moduleEntries.map(([slug, module]) => (
+          <article key={slug} className={"module " + module.colorClass}>
+            <div className="moduleNumber">{module.order}</div>
+            <h3>{module.course}</h3>
+            <p className="subtitle">{module.lens}</p>
             <ul>
-              {module.items.map(item => <li key={item}>{item}</li>)}
+              {module.objectives.map((item) => <li key={item}>{item}</li>)}
             </ul>
-            <button disabled>Open module</button>
+            <Link className="cardButton" href={"/module/" + slug}>
+              Open module
+            </Link>
           </article>
         ))}
       </section>
@@ -69,21 +61,38 @@ export default function HomePage() {
       <section className="shared">
         <h2>Shared Elements Across Courses</h2>
         <div className="sharedGrid">
-          <div><strong>Shared assessment items</strong><span>Common or equivalent questions across modules.</span></div>
-          <div><strong>Aligned learning outcomes</strong><span>Each course keeps its own disciplinary objective.</span></div>
-          <div><strong>Longitudinal data</strong><span>Track accuracy, attempts, and response time over time.</span></div>
-          <div><strong>Communication / role play</strong><span>Students interpret the case from different professional perspectives.</span></div>
+          <div>
+            <strong>Shared assessment items</strong>
+            <span>Common or equivalent questions can appear across modules.</span>
+          </div>
+          <div>
+            <strong>Aligned learning outcomes</strong>
+            <span>Each course keeps its own disciplinary objective.</span>
+          </div>
+          <div>
+            <strong>Longitudinal data</strong>
+            <span>Planned tracking includes accuracy, attempts, and response time.</span>
+          </div>
+          <div>
+            <strong>Communication / role play</strong>
+            <span>Students can interpret the case from different professional perspectives.</span>
+          </div>
         </div>
       </section>
 
       <section className="next">
-        <h2>MVP roadmap</h2>
-        <ol>
-          <li>Build the shared camper case and three course modules.</li>
-          <li>Add shared assessment questions and module-specific questions.</li>
-          <li>Store responses in a database with course, semester, correctness, and response time.</li>
-          <li>Add an instructor dashboard after the student flow is working.</li>
-        </ol>
+        <div>
+          <div className="eyebrow">Current build</div>
+          <h2>Student flow is now interactive</h2>
+          <p>
+            The first version includes the shared case, three course lenses, question
+            feedback, and an integrated assessment. Data storage and the instructor
+            dashboard come next.
+          </p>
+        </div>
+        <Link href="/module/cellular-foundation" className="primaryLink">
+          Start the case →
+        </Link>
       </section>
     </main>
   );
