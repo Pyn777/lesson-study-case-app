@@ -1,0 +1,41 @@
+:root {
+  --ink: #0d274d;
+  --muted: #53657d;
+  --panel: #ffffff;
+  --line: #dbe5ef;
+  --bg: #f4f8fc;
+  --blue: #dcecff;
+  --green: #e5f5df;
+  --purple: #eee5f8;
+  --gold: #fff3d6;
+}
+* { box-sizing: border-box; }
+body { margin:0; font-family: Arial, Helvetica, sans-serif; background:var(--bg); color:var(--ink); }
+.shell { max-width:1180px; margin:0 auto; padding:48px 24px 72px; }
+.hero { text-align:center; margin-bottom:28px; }
+.eyebrow { text-transform:uppercase; letter-spacing:.12em; font-weight:700; color:#3b6b9e; font-size:.78rem; }
+h1 { margin:.3rem 0; font-size:clamp(2.2rem,5vw,4rem); }
+.lead { color:var(--muted); font-size:1.15rem; }
+.caseCard { display:grid; grid-template-columns:2fr 1fr; gap:24px; background:#e9f6df; border:1px solid #b9d8aa; border-radius:20px; padding:28px; margin:28px 0; box-shadow:0 12px 28px rgba(31,51,76,.08); }
+.pill { display:inline-block; background:#fff; border-radius:999px; padding:6px 10px; font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+.caseMeta { display:flex; flex-direction:column; gap:8px; justify-content:center; color:#264f34; }
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.module { position:relative; border:1px solid var(--line); border-radius:18px; padding:24px; min-height:320px; box-shadow:0 10px 24px rgba(31,51,76,.07); }
+.module-1 { background:var(--blue); }
+.module-2 { background:var(--green); }
+.module-3 { background:var(--purple); }
+.moduleNumber { position:absolute; top:16px; right:16px; width:34px; height:34px; display:grid; place-items:center; border-radius:50%; background:#fff; font-weight:700; }
+.module h3 { margin:0 0 4px; font-size:1.35rem; }
+.subtitle { text-transform:uppercase; letter-spacing:.08em; font-size:.78rem; font-weight:700; color:var(--muted); }
+.module ul { padding-left:20px; line-height:1.5; }
+button { margin-top:10px; padding:10px 14px; border:0; border-radius:10px; background:#12385f; color:white; font-weight:700; opacity:.5; }
+.shared { margin-top:26px; background:var(--gold); border:1px solid #ead8a9; border-radius:18px; padding:24px; }
+.shared h2, .next h2 { margin-top:0; }
+.sharedGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.sharedGrid div { background:#fff9ea; border:1px solid #ead8a9; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:7px; }
+.sharedGrid span { color:var(--muted); font-size:.92rem; line-height:1.4; }
+.next { margin-top:26px; background:var(--panel); border:1px solid var(--line); border-radius:18px; padding:24px; }
+.next li { margin:.65rem 0; }
+@media (max-width:900px) {
+  .grid, .sharedGrid, .caseCard { grid-template-columns:1fr; }
+}
