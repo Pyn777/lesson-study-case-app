@@ -1,5 +1,6 @@
 import Link from "next/link";
 import QuestionSet from "../../components/QuestionSet";
+import CaseRecord from "../../components/CaseRecord";
 import { integratedQuestions } from "../../data/caseData";
 
 export default function AssessmentPage() {
@@ -15,6 +16,8 @@ export default function AssessmentPage() {
           and whole-body renal response.
         </p>
       </section>
+
+      <CaseRecord currentStage="integrated-assessment" />
 
       <section className="contentPanel">
         <QuestionSet
