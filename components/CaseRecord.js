@@ -24,7 +24,7 @@ const stages = [
   },
 ];
 
-export default function CaseRecord({ currentStage = null, compact = false }) {
+export default function CaseRecord({ currentStage = null, compact = false, activeModules = null }) {
   const [progress, setProgress] = useState({});
 
   useEffect(() => {
@@ -48,14 +48,18 @@ export default function CaseRecord({ currentStage = null, compact = false }) {
   }, []);
 
   const visibleStages = useMemo(() => {
+    const allowed = Array.isArray(activeModules) ? new Set(activeModules) : null;
     return stages.filter((stage) => {
+      if (allowed && !allowed.has(stage.id) && !progress[stage.id]?.completed) {
+        return false;
+      }
       if (progress[stage.id]?.completed) return true;
       if (currentStage && stage.id === currentStage) return true;
 
       const current = stages.find((item) => item.id === currentStage);
       return current && stage.order < current.order;
     });
-  }, [progress, currentStage]);
+  }, [progress, currentStage, activeModules]);
 
   return (
     <section className={"caseRecord " + (compact ? "caseRecordCompact" : "")}>
@@ -79,6 +83,11 @@ export default function CaseRecord({ currentStage = null, compact = false }) {
             const completed = Boolean(progress[stage.id]?.completed);
             const isCurrent = stage.id === currentStage && !completed;
             const result = progress[stage.id];
+            const statusLabel = completed
+              ? "Added to record"
+              : isCurrent
+                ? "Current lens"
+                : "Earlier lens";
 
             return (
               <article
@@ -97,7 +106,7 @@ export default function CaseRecord({ currentStage = null, compact = false }) {
                       <span>{stage.lens}</span>
                     </div>
                     <span className="caseStatus">
-                      {completed ? "Added to record" : "Current lens"}
+                      {statusLabel}
                     </span>
                   </div>
 
