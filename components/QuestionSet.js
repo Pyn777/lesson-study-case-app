@@ -10,6 +10,7 @@ export default function QuestionSet({
   questions,
   moduleId = "unknown",
   submitLabel = "Check answers",
+  activeAnchorQuestionIds = null,
 }) {
   const [responses, setResponses] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -65,6 +66,12 @@ export default function QuestionSet({
       const decisionMs =
         decisionTimes.current[question.id] ?? moduleElapsedMs;
       const changes = answerChanges.current[question.id] || 0;
+      const isActiveAnchor = Array.isArray(activeAnchorQuestionIds)
+        ? activeAnchorQuestionIds.includes(question.id)
+        : Boolean(question.anchorId);
+      const effectiveAnchorId = isActiveAnchor
+        ? question.anchorId || (question.construct ? question.construct + "-anchor" : "instructor-selected-anchor")
+        : "";
 
       return {
       studyId: session.studyId || "",
@@ -77,10 +84,14 @@ export default function QuestionSet({
       module: moduleId,
       questionId: question.id,
       conceptTag: question.conceptTag || "",
-      anchorId: question.anchorId || "",
+      anchorId: effectiveAnchorId,
       construct: question.construct || "",
       cognitiveLevel: question.cognitiveLevel || "",
-      itemRole: question.itemRole || "",
+      itemRole: isActiveAnchor
+        ? "anchor"
+        : question.itemRole === "anchor"
+          ? "discipline"
+          : question.itemRole || "",
       discipline: question.discipline || "",
       transferType: question.transferType || "",
       choiceIndex: responses[question.id],
