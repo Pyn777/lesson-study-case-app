@@ -1,4 +1,5 @@
 import Link from "next/link";
+import StudySession from "../components/StudySession";
 import { modules, sharedCase } from "../data/caseData";
 
 const moduleEntries = Object.entries(modules).sort(
@@ -27,6 +28,8 @@ export default function HomePage() {
           <span>Introduce early, revisit across courses, deepen understanding.</span>
         </div>
       </section>
+
+      <StudySession />
 
       <section className="progressStrip" aria-label="Course progression">
         {moduleEntries.map(([slug, module], index) => (
@@ -90,9 +93,12 @@ export default function HomePage() {
             dashboard come next.
           </p>
         </div>
-        <Link href="/module/cellular-foundation" className="primaryLink">
-          Start the case →
-        </Link>
+        <div className="buttonRow">
+          <Link href="/results" className="secondaryLink">View local results</Link>
+          <Link href="/module/cellular-foundation" className="primaryLink">
+            Start the case →
+          </Link>
+        </div>
       </section>
     </main>
   );
