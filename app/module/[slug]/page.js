@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import QuestionSet from "../../../components/QuestionSet";
+import CaseRecord from "../../../components/CaseRecord";
 import { modules, sharedCase } from "../../../data/caseData";
 
 export function generateStaticParams() {
@@ -38,6 +39,8 @@ export default async function ModulePage({ params }) {
         <h2>{sharedCase.title}</h2>
         <p>{module.caseUpdate}</p>
       </section>
+
+      <CaseRecord currentStage={slug} compact />
 
       <section className="contentPanel">
         <h2>Learning focus</h2>
