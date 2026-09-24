@@ -12,6 +12,16 @@ export const modules = {
     colorClass: "moduleBlue",
     caseUpdate:
       "A camper has had repeated vomiting and diarrhea for 18 hours. The camper reports intense thirst and dizziness. You are asked to explain how fluid loss changes the movement of water across cell membranes.",
+    caseFinding: {
+      label: "Cellular finding",
+      summary:
+        "Water loss makes the extracellular environment relatively more concentrated, so water shifts out of cells by osmosis. This provides the cellular basis for the camper's fluid imbalance.",
+      evidence: [
+        "Repeated vomiting and diarrhea for 18 hours",
+        "Intense thirst and dizziness",
+        "Cellular water movement depends on extracellular solute concentration",
+      ],
+    },
     objectives: [
       "Relate diffusion and osmosis to fluid shifts.",
       "Apply tonicity concepts to a dehydration scenario.",
@@ -83,6 +93,16 @@ export const modules = {
     colorClass: "moduleGreen",
     caseUpdate:
       "Additional campers develop similar symptoms. Stool and culture findings suggest a bacterial source. The microbiology team must identify the likely organism and connect the infection to the campers' fluid loss.",
+    caseFinding: {
+      label: "Microbiology finding",
+      summary:
+        "The pattern is consistent with an infectious gastrointestinal source. Culture observations and biochemical testing provide the evidence needed to narrow the bacterial identity and explain the cause of the fluid loss.",
+      evidence: [
+        "Multiple campers develop similar gastrointestinal symptoms",
+        "Culture findings suggest a bacterial source",
+        "Biochemical test patterns help distinguish bacterial isolates",
+      ],
+    },
     objectives: [
       "Use culture and biochemical evidence to narrow bacterial identity.",
       "Connect pathogen activity to gastrointestinal fluid loss.",
@@ -159,6 +179,16 @@ export const modules = {
     colorClass: "modulePurple",
     caseUpdate:
       "The camper remains dehydrated. Blood volume and pressure are reduced, and the kidneys must conserve water while helping maintain electrolyte balance.",
+    caseFinding: {
+      label: "Renal finding",
+      summary:
+        "Reduced body water lowers blood volume and pressure. The kidneys respond by conserving water and adjusting electrolyte handling, producing a smaller volume of more concentrated urine.",
+      evidence: [
+        "Persistent dehydration",
+        "Reduced blood volume and blood pressure",
+        "Renal compensation increases water conservation",
+      ],
+    },
     objectives: [
       "Relate nephron function to water and electrolyte conservation.",
       "Connect hormonal compensation to dehydration.",
@@ -273,3 +303,15 @@ export const integratedQuestions = [
       "The shared case is useful because each course contributes a different level of explanation while retaining its own learning outcomes.",
   },
 ];
+
+
+export const integratedFinding = {
+  label: "Integrated case conclusion",
+  summary:
+    "The case now links an infectious gastrointestinal cause to fluid loss, cellular water shifts, and renal compensation. The disciplines contribute different levels of explanation to the same developing problem.",
+  evidence: [
+    "Infectious process produces gastrointestinal fluid loss",
+    "Membrane transport explains cellular fluid shifts",
+    "Kidney responses help restore fluid and electrolyte homeostasis",
+  ],
+};
