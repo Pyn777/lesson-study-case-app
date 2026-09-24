@@ -470,11 +470,97 @@ export default function ResultsPage() {
 
   function exportCsv() {
     const headers=["studyId","submissionId","sessionId","semester","cohort","course","section","instructor","deliveryMode","module","questionId","conceptTag","anchorId","construct","cognitiveLevel","itemRole","discipline","transferType","choiceIndex","correct","attempt","clientAttempt","attemptType","firstAnswerMs","decisionMs","moduleElapsedMs","answerChanges","rapidResponseFlag","submittedAt","receivedAt"];
-    const lines=[headers.join(","),...filteredRows.map(row=>headers.map(h=>csvEscape(row[h])).join(","))];
-    const blob=new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"});
-    const url=URL.createObjectURL(blob); const a=document.createElement("a");
-    a.href=url; a.download="lesson-study-responses.csv"; a.click(); URL.revokeObjectURL(url);
+    downloadCsv("lesson-study-responses.csv", headers, filteredRows);
   }
+
+
+  function downloadCsv(filename, headers, dataRows) {
+    const lines = [
+      headers.join(","),
+      ...dataRows.map((row) => headers.map((header) => csvEscape(row[header])).join(",")),
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportLongitudinalCsv() {
+    const rowsForExport = [];
+    for (const student of repeatedMeasures) {
+      for (const stage of student.stages) {
+        rowsForExport.push({
+          studyId: student.studyId,
+          module: stage.module,
+          moduleLabel: stage.label,
+          moduleOrder: stage.order,
+          accuracyPct: stage.accuracy.toFixed(2),
+          avgDecisionMs: Math.round(stage.avgDecisionMs),
+          responses: stage.responses,
+          firstModule: student.first.module,
+          latestModule: student.last.module,
+          accuracyDeltaPctPoints: student.accuracyDelta.toFixed(2),
+          decisionTimeDeltaMs: Math.round(student.timeDeltaMs),
+          completedStageCount: student.stageCount,
+        });
+      }
+    }
+
+    downloadCsv(
+      "lesson-study-longitudinal-summary.csv",
+      [
+        "studyId","module","moduleLabel","moduleOrder","accuracyPct","avgDecisionMs",
+        "responses","firstModule","latestModule","accuracyDeltaPctPoints",
+        "decisionTimeDeltaMs","completedStageCount"
+      ],
+      rowsForExport
+    );
+  }
+
+  function exportDataDictionary() {
+    const dictionary = [
+      ["studyId","Anonymous longitudinal participant code","string","Do not use names, emails, or college IDs"],
+      ["submissionId","Unique checkpoint submission identifier","UUID/string","Used for duplicate protection"],
+      ["sessionId","Browser study-session identifier","UUID/string","Links submissions from the same browser session"],
+      ["semester","Academic term","string","Example: Fall 2026"],
+      ["cohort","Instructor-defined cohort label","string","Optional grouping variable"],
+      ["course","Course selected for the session","string","General Biology, A&P I, Microbiology, or A&P II"],
+      ["section","Course section","string","Optional"],
+      ["instructor","Instructor label","string","Optional"],
+      ["deliveryMode","Instructional delivery mode","string","Online, On-ground, or Hybrid"],
+      ["module","Case-study module identifier","string","Ordered disciplinary stage"],
+      ["questionId","Stable assessment item identifier","string","Use for item-level analyses"],
+      ["conceptTag","Fine-grained content tag","string","Item metadata"],
+      ["anchorId","Longitudinal anchor family","string","Blank when item is not an active anchor"],
+      ["construct","Broader measured construct","string","Examples: membrane-transport, renal-homeostasis"],
+      ["cognitiveLevel","Intended cognitive level","string","Understand, apply, or analyze"],
+      ["itemRole","Item role in study design","string","Discipline, anchor, or transfer"],
+      ["discipline","Disciplinary lens","string","General Biology / A&P I, Microbiology, A&P II, Integrated"],
+      ["transferType","Transfer classification","string","Foundational, near-transfer, cross-disciplinary, far-transfer"],
+      ["choiceIndex","Selected answer option index","integer","Zero-based"],
+      ["correct","Whether selected answer is keyed correct","boolean","True/false"],
+      ["attempt","Server-assigned canonical attempt number","integer","1=initial; >1=retake"],
+      ["clientAttempt","Browser-side attempt counter","integer","Diagnostic only; canonical attempt is preferred"],
+      ["attemptType","Server-classified attempt type","string","Initial or retake"],
+      ["firstAnswerMs","Elapsed time from question-set load to first selection","integer milliseconds","Descriptive timing measure"],
+      ["decisionMs","Interval between successive first selections","integer milliseconds","Primary per-item timing field"],
+      ["moduleElapsedMs","Total elapsed time from question-set load to submission","integer milliseconds","Repeated on each row from same submission"],
+      ["answerChanges","Number of answer changes before submission","integer","Per item"],
+      ["rapidResponseFlag","Decision interval below review threshold","boolean","Review signal only, not proof of guessing"],
+      ["submittedAt","Client submission timestamp","ISO-8601 timestamp","Client clock"],
+      ["receivedAt","Database receipt timestamp","ISO-8601 timestamp","Server/database time"],
+    ].map(([field,definition,type,notes]) => ({ field, definition, type, notes }));
+
+    downloadCsv(
+      "lesson-study-data-dictionary.csv",
+      ["field","definition","type","notes"],
+      dictionary
+    );
+  }
+
 
   const accuracy = computed.totalResponses ? (computed.correctResponses/computed.totalResponses)*100 : 0;
   const hasFilters = Object.values(filters).some(Boolean);
@@ -731,12 +817,35 @@ export default function ResultsPage() {
           </section>
 
 
+
+          <section className="contentPanel">
+            <div className="sectionHeader">
+              <div>
+                <div className="eyebrow">Research-ready documentation</div>
+                <h2>Export and interpretation notes</h2>
+              </div>
+              <Link href="/privacy" className="secondaryLink">Privacy & data use</Link>
+            </div>
+            <p>
+              The raw export is one row per question response. The longitudinal summary is one row per
+              Study ID and completed module, with module accuracy, average decision time, and first-to-latest
+              change fields. The data dictionary defines every exported variable.
+            </p>
+            <p className="prototypeNote">
+              These files support analysis and documentation but do not determine whether a project is human-subjects research
+              or whether institutional review or consent is required. Follow applicable institutional procedures before formal
+              research, publication, or external dissemination.
+            </p>
+          </section>
+
           <section className="contentPanel">
             <div className="sectionHeader">
               <div><div className="eyebrow">Recorded events</div><h2>Raw question-level data</h2></div>
               <div className="buttonRow">
                 <button className="secondaryButton" type="button" onClick={loadResults}>Refresh</button>
                 <button className="secondaryButton" type="button" onClick={exportCsv} disabled={!filteredRows.length}>Export filtered CSV</button>
+                <button className="secondaryButton" type="button" onClick={exportLongitudinalCsv} disabled={!repeatedMeasures.length}>Export longitudinal summary</button>
+                <button className="secondaryButton" type="button" onClick={exportDataDictionary}>Download data dictionary</button>
               </div>
             </div>
             {!filteredRows.length ? <p>No responses match the current filters.</p> : (
