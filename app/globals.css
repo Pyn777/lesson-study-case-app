@@ -150,3 +150,25 @@ th { color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spac
 }
 
 .progressionStep { white-space: nowrap; }
+
+.trendChartWrap { overflow-x:auto; margin-top:14px; }
+.trendChart { width:100%; min-width:680px; height:auto; display:block; }
+.trendAxis { stroke:#cbd5e1; stroke-width:1; }
+.trendLine { stroke:#547da8; stroke-width:4; stroke-linecap:round; stroke-linejoin:round; }
+.trendPoint { fill:#fff; stroke:#547da8; stroke-width:4; }
+.trendValue { font-size:13px; font-weight:700; fill:#1f2937; }
+.trendLabel { font-size:12px; fill:#667085; }
+.trendDelta { display:flex; flex-direction:column; align-items:flex-end; gap:2px; text-align:right; }
+.trendDelta span,.trendDelta small { color:var(--muted); font-size:.78rem; }
+.trendDelta strong { font-size:1.35rem; }
+.trendMetaGrid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:8px; }
+.trendMetaCard { border:1px solid var(--line); border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:3px; }
+.trendMetaCard strong { font-size:.84rem; }
+.trendMetaCard span { color:var(--muted); font-size:.75rem; }
+@media (max-width:760px) {
+  .trendMetaGrid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .trendDelta { align-items:flex-start; text-align:left; }
+}
+@media (max-width:480px) {
+  .trendMetaGrid { grid-template-columns:1fr; }
+}
