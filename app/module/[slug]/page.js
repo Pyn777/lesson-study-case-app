@@ -46,7 +46,7 @@ export default async function ModulePage({ params }) {
         <p>{module.caseUpdate}</p>
       </section>
 
-      <CaseRecord currentStage={slug} compact />
+      <CaseRecord currentStage={slug} compact activeModules={settings.activeModules} />
 
       <section className="contentPanel">
         <h2>Learning focus</h2>
