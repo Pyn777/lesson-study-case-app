@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import QuestionSet from "../../../components/QuestionSet";
 import CaseRecord from "../../../components/CaseRecord";
+import RolePlayActivity from "../../../components/RolePlayActivity";
 import { modules, sharedCase } from "../../../data/caseData";
 import { getStudySettings } from "../../../lib/db";
 
@@ -56,6 +57,8 @@ export default async function ModulePage({ params }) {
           ))}
         </ul>
       </section>
+
+      <RolePlayActivity moduleId={slug} activity={module.rolePlay} />
 
       <section className="contentPanel">
         <div className="sectionHeader">
