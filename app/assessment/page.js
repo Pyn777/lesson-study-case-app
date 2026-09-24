@@ -1,7 +1,8 @@
 import Link from "next/link";
 import QuestionSet from "../../components/QuestionSet";
 import CaseRecord from "../../components/CaseRecord";
-import { integratedQuestions } from "../../data/caseData";
+import RolePlayActivity from "../../components/RolePlayActivity";
+import { integratedQuestions, integratedRolePlay } from "../../data/caseData";
 import { getStudySettings } from "../../lib/db";
 import { notFound } from "next/navigation";
 
@@ -26,6 +27,11 @@ export default async function AssessmentPage() {
       </section>
 
       <CaseRecord currentStage="integrated-assessment" activeModules={settings.activeModules} />
+
+      <RolePlayActivity
+        moduleId="integrated-assessment"
+        activity={integratedRolePlay}
+      />
 
       <section className="contentPanel">
         <QuestionSet
