@@ -345,6 +345,7 @@ export default function ResultsPage() {
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState(null);
   const [audit, setAudit] = useState([]);
+  const [rolePlay, setRolePlay] = useState([]);
   const [status, setStatus] = useState("locked");
   const [error, setError] = useState("");
   const [testStatus, setTestStatus] = useState("");
@@ -425,6 +426,15 @@ export default function ResultsPage() {
     return { filteredAudit, initial, retakes, accepted };
   }, [audit, filters.studyId, filters.module, filters.semester]);
 
+  const filteredRolePlay = useMemo(() => rolePlay.filter((entry) => {
+    if (filters.studyId && entry.studyId !== filters.studyId) return false;
+    if (filters.module && entry.module !== filters.module) return false;
+    if (filters.semester && entry.semester !== filters.semester) return false;
+    if (filters.course && entry.course !== filters.course) return false;
+    if (filters.section && entry.section !== filters.section) return false;
+    return true;
+  }), [rolePlay, filters.studyId, filters.module, filters.semester, filters.course, filters.section]);
+
   const courseSummary = useMemo(() => summarize(filteredRows, r=>r.course), [filteredRows]);
   const semesterSummary = useMemo(() => summarize(filteredRows, r=>r.semester), [filteredRows]);
   const cohortSummary = useMemo(() => summarize(filteredRows, r=>r.cohort), [filteredRows]);
@@ -450,6 +460,7 @@ export default function ResultsPage() {
       setRows(data.rows || []);
       setSummary(data.summary || null);
       setAudit(data.audit || []);
+      setRolePlay(data.rolePlay || []);
       setStatus("ready");
     } catch (err) {
       setStatus("locked"); setError(err.message || "Unable to load results.");
@@ -836,6 +847,53 @@ export default function ResultsPage() {
               or whether institutional review or consent is required. Follow applicable institutional procedures before formal
               research, publication, or external dissemination.
             </p>
+          </section>
+
+
+          <section className="contentPanel">
+            <div className="sectionHeader">
+              <div>
+                <div className="eyebrow">Interdisciplinary communication</div>
+                <h2>Structured role-play handoffs</h2>
+              </div>
+            </div>
+            <p className="prototypeNote">
+              These handoffs are built from predefined roles, claims, evidence, and actions rather than free-text notes.
+              They can be reviewed alongside the same Study ID's assessment data.
+            </p>
+
+            {!filteredRolePlay.length ? (
+              <p>No role-play handoffs match the current filters.</p>
+            ) : (
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Study ID</th>
+                      <th>Module</th>
+                      <th>Role</th>
+                      <th>Claim</th>
+                      <th>Evidence</th>
+                      <th>Action</th>
+                      <th>Submitted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRolePlay.slice(0, 250).map((entry) => (
+                      <tr key={entry.roleplayId}>
+                        <td>{entry.studyId || "—"}</td>
+                        <td>{entry.module}</td>
+                        <td>{entry.roleName}</td>
+                        <td className="wrapCell">{entry.claimText}</td>
+                        <td className="wrapCell">{entry.evidenceText}</td>
+                        <td className="wrapCell">{entry.actionText}</td>
+                        <td>{entry.submittedAt ? new Date(entry.submittedAt).toLocaleString() : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
 
           <section className="contentPanel">
