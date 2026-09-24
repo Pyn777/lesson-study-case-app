@@ -1,5 +1,6 @@
 import Link from "next/link";
 import StudySession from "../components/StudySession";
+import CaseRecord from "../components/CaseRecord";
 import { modules, sharedCase } from "../data/caseData";
 
 const moduleEntries = Object.entries(modules).sort(
@@ -30,6 +31,7 @@ export default function HomePage() {
       </section>
 
       <StudySession />
+      <CaseRecord compact />
 
       <section className="progressStrip" aria-label="Course progression">
         {moduleEntries.map(([slug, module], index) => (
