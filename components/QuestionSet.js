@@ -44,6 +44,8 @@ export default function QuestionSet({
       section: session.section || "",
       module: moduleId,
       questionId: question.id,
+      conceptTag: question.conceptTag || "",
+      anchorId: question.anchorId || "",
       choiceIndex: responses[question.id],
       correct: responses[question.id] === question.answer,
       attempt,
