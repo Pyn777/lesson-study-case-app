@@ -2,12 +2,17 @@ import Link from "next/link";
 import StudySession from "../components/StudySession";
 import CaseRecord from "../components/CaseRecord";
 import { modules, sharedCase } from "../data/caseData";
+import { getStudySettings } from "../lib/db";
 
-const moduleEntries = Object.entries(modules).sort(
-  (a, b) => a[1].order - b[1].order
-);
+export const dynamic = "force-dynamic";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await getStudySettings();
+  const moduleEntries = Object.entries(modules)
+    .filter(([slug]) => settings.activeModules.includes(slug))
+    .sort((a, b) => a[1].order - b[1].order);
+  const integratedActive = settings.activeModules.includes("integrated-assessment");
+  const firstActiveSlug = moduleEntries[0]?.[0] || null;
   return (
     <main className="shell">
       <section className="hero">
@@ -41,10 +46,12 @@ export default function HomePage() {
             {index < moduleEntries.length - 1 && <span className="progressArrow">→</span>}
           </div>
         ))}
-        <div className="progressItem">
-          <span className="progressNumber">4</span>
-          <span>Integrated Assessment</span>
-        </div>
+        {integratedActive && (
+          <div className="progressItem">
+            <span className="progressNumber">4</span>
+            <span>Integrated Assessment</span>
+          </div>
+        )}
       </section>
 
       <section className="grid">
@@ -97,9 +104,17 @@ export default function HomePage() {
         </div>
         <div className="buttonRow">
           <Link href="/results" className="secondaryLink">View local results</Link>
-          <Link href="/module/cellular-foundation" className="primaryLink">
-            Start the case →
-          </Link>
+          {firstActiveSlug ? (
+            <Link href={"/module/" + firstActiveSlug} className="primaryLink">
+              Start the case →
+            </Link>
+          ) : integratedActive ? (
+            <Link href="/assessment" className="primaryLink">
+              Start integrated assessment →
+            </Link>
+          ) : (
+            <span className="prototypeNote">No student modules are active.</span>
+          )}
         </div>
       </section>
     </main>
