@@ -6,6 +6,13 @@ const RESPONSE_KEY = "lessonStudyResponses";
 const SESSION_KEY = "lessonStudySession";
 const PROGRESS_KEY = "lessonStudyCaseProgress";
 
+function makeId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "id-" + Date.now() + "-" + Math.random().toString(36).slice(2);
+}
+
 export default function QuestionSet({
   questions,
   moduleId = "unknown",
@@ -16,6 +23,7 @@ export default function QuestionSet({
   const [submitted, setSubmitted] = useState(false);
   const [attempt, setAttempt] = useState(1);
   const [saveState, setSaveState] = useState("idle");
+  const [saveMessage, setSaveMessage] = useState("");
   const startedAt = useRef(Date.now());
   const firstAnswerTimes = useRef({});
   const decisionTimes = useRef({});
@@ -59,6 +67,14 @@ export default function QuestionSet({
 
     const submittedAt = new Date().toISOString();
     const moduleElapsedMs = Date.now() - startedAt.current;
+    const submissionId = makeId();
+
+    if (!session.sessionId) {
+      session.sessionId = makeId();
+      try {
+        window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      } catch {}
+    }
 
     return questions.map((question) => {
       const firstAnswerMs =
@@ -75,6 +91,8 @@ export default function QuestionSet({
 
       return {
       studyId: session.studyId || "",
+      submissionId,
+      sessionId: session.sessionId || "",
       course: session.course || "",
       section: session.section || "",
       semester: session.semester || "",
@@ -147,8 +165,20 @@ export default function QuestionSet({
         body: JSON.stringify({ rows }),
       });
 
-      if (!response.ok) throw new Error("save failed");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "save failed");
       setSaveState("saved");
+      if (data.duplicate) {
+        setSaveMessage(
+          "This submission had already been received, so the duplicate was not stored again."
+        );
+      } else {
+        setSaveMessage(
+          data.attemptType === "retake"
+            ? "Saved as retake " + data.canonicalAttempt + "."
+            : "Saved as the initial attempt."
+        );
+      }
     } catch {
       setSaveState("local-only");
     }
@@ -167,6 +197,7 @@ export default function QuestionSet({
     setSubmitted(false);
     setAttempt((current) => current + 1);
     setSaveState("idle");
+    setSaveMessage("");
     startedAt.current = Date.now();
     firstAnswerTimes.current = {};
     decisionTimes.current = {};
@@ -243,7 +274,9 @@ export default function QuestionSet({
         <p className="prototypeNote">
           {saveState === "saving" && "Saving response data…"}
           {saveState === "saved" &&
-            "Response data saved to the shared study database. Timing includes per-question decision intervals and total module time."}
+            "Response data saved to the shared study database. " +
+              saveMessage +
+              " Timing includes per-question decision intervals and total module time."}
           {saveState === "local-only" &&
             "Database save is not available yet. A local browser copy was kept instead."}
         </p>
