@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import InstructorControls from "../../components/InstructorControls";
 import { useMemo, useState } from "react";
 
 
@@ -483,6 +484,8 @@ export default function ResultsPage() {
         </section>
       ) : (
         <>
+          <InstructorControls accessKey={accessKey} />
+
           <section className="contentPanel">
             <div className="sectionHeader">
               <div><div className="eyebrow">Database diagnostic</div><h2>Connection check</h2></div>
