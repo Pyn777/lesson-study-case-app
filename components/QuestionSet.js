@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 
 const RESPONSE_KEY = "lessonStudyResponses";
 const SESSION_KEY = "lessonStudySession";
+const PROGRESS_KEY = "lessonStudyCaseProgress";
 
 export default function QuestionSet({
   questions,
@@ -109,6 +110,23 @@ export default function QuestionSet({
     );
   }
 
+  function saveProgress() {
+    let progress = {};
+    try {
+      progress = JSON.parse(window.localStorage.getItem(PROGRESS_KEY) || "{}");
+    } catch {}
+
+    progress[moduleId] = {
+      completed: true,
+      score,
+      total: questions.length,
+      completedAt: new Date().toISOString(),
+    };
+
+    window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+    window.dispatchEvent(new CustomEvent("lesson-study-progress-updated"));
+  }
+
   async function savePersistent(rows) {
     try {
       setSaveState("saving");
@@ -128,6 +146,7 @@ export default function QuestionSet({
   async function submit() {
     const rows = buildRows();
     saveLocal(rows);
+    saveProgress();
     setSubmitted(true);
     await savePersistent(rows);
   }
