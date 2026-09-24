@@ -207,3 +207,12 @@ th { color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spac
 @media (max-width:800px) {
   .controlGrid { grid-template-columns:1fr; }
 }
+
+.privacyBanner { display:flex; align-items:center; justify-content:space-between; gap:18px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 18px; margin:0 0 20px; }
+.privacyBanner > div { display:flex; flex-direction:column; gap:4px; }
+.privacyBanner span { color:var(--muted); font-size:.88rem; line-height:1.4; }
+.privacyAcknowledge { grid-column:1 / -1; display:flex !important; flex-direction:row !important; align-items:flex-start; gap:9px !important; background:#f8fbfd; border:1px solid var(--line); border-radius:10px; padding:10px 12px; color:var(--ink) !important; font-weight:500 !important; line-height:1.4; }
+.privacyAcknowledge input { width:auto !important; margin-top:3px; }
+@media (max-width:700px) {
+  .privacyBanner { align-items:flex-start; flex-direction:column; }
+}
