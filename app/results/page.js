@@ -346,6 +346,7 @@ export default function ResultsPage() {
   const [summary, setSummary] = useState(null);
   const [audit, setAudit] = useState([]);
   const [rolePlay, setRolePlay] = useState([]);
+  const [urinalysis, setUrinalysis] = useState([]);
   const [status, setStatus] = useState("locked");
   const [error, setError] = useState("");
   const [testStatus, setTestStatus] = useState("");
@@ -435,6 +436,14 @@ export default function ResultsPage() {
     return true;
   }), [rolePlay, filters.studyId, filters.module, filters.semester, filters.course, filters.section]);
 
+  const filteredUrinalysis = useMemo(() => urinalysis.filter((entry) => {
+    if (filters.studyId && entry.studyId !== filters.studyId) return false;
+    if (filters.semester && entry.semester !== filters.semester) return false;
+    if (filters.course && entry.course !== filters.course) return false;
+    if (filters.section && entry.section !== filters.section) return false;
+    return true;
+  }), [urinalysis, filters.studyId, filters.semester, filters.course, filters.section]);
+
   const courseSummary = useMemo(() => summarize(filteredRows, r=>r.course), [filteredRows]);
   const semesterSummary = useMemo(() => summarize(filteredRows, r=>r.semester), [filteredRows]);
   const cohortSummary = useMemo(() => summarize(filteredRows, r=>r.cohort), [filteredRows]);
@@ -461,6 +470,7 @@ export default function ResultsPage() {
       setSummary(data.summary || null);
       setAudit(data.audit || []);
       setRolePlay(data.rolePlay || []);
+      setUrinalysis(data.urinalysis || []);
       setStatus("ready");
     } catch (err) {
       setStatus("locked"); setError(err.message || "Unable to load results.");
@@ -849,6 +859,56 @@ export default function ResultsPage() {
             </p>
           </section>
 
+
+
+          <section className="contentPanel">
+            <div className="sectionHeader">
+              <div>
+                <div className="eyebrow">Urinalysis integration</div>
+                <h2>Simulation results linked to Study IDs</h2>
+              </div>
+            </div>
+            <p className="prototypeNote">
+              These records come from the existing Urinalysis Clinical Simulation when it is opened through the integrated Microbiology extension.
+            </p>
+
+            {!filteredUrinalysis.length ? (
+              <p>No integrated urinalysis results match the current filters.</p>
+            ) : (
+              <div className="tableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Study ID</th>
+                      <th>Case</th>
+                      <th>Score</th>
+                      <th>Final ID</th>
+                      <th>Expected organism</th>
+                      <th>Gram</th>
+                      <th>Rapid test</th>
+                      <th>Follow-up</th>
+                      <th>Submitted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUrinalysis.slice(0, 250).map((entry) => (
+                      <tr key={entry.integrationId}>
+                        <td>{entry.studyId || "—"}</td>
+                        <td>{entry.caseTitle || entry.caseId || "—"}</td>
+                        <td>{entry.score != null && entry.outOf != null ? entry.score + "/" + entry.outOf : "—"}</td>
+                        <td>{entry.finalIdentification || "—"}</td>
+                        <td>{entry.organism || "—"}</td>
+                        <td>{entry.gramReaction || "—"}</td>
+                        <td>{entry.rapidTest || "—"}</td>
+                        <td>{entry.followupTest || "—"}</td>
+                        <td>{entry.submittedAt ? new Date(entry.submittedAt).toLocaleString() : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
           <section className="contentPanel">
             <div className="sectionHeader">
